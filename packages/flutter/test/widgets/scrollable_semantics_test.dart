@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'dart:ui';
-
 import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -59,6 +57,7 @@ void main() {
     final ScrollController scrollController = ScrollController(
       initialScrollOffset: kItemHeight / 2,
     );
+    addTearDown(scrollController.dispose);
 
     await tester.pumpWidget(
       Directionality(
@@ -98,6 +97,7 @@ void main() {
     final ScrollController scrollController = ScrollController(
       initialScrollOffset: kItemHeight / 2,
     );
+    addTearDown(scrollController.dispose);
 
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
@@ -168,6 +168,7 @@ void main() {
     final ScrollController scrollController = ScrollController(
       initialScrollOffset: 2.5 * kItemHeight,
     );
+    addTearDown(scrollController.dispose);
 
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
@@ -538,7 +539,10 @@ void main() {
           ),
         ),
       );
+    });
 
+    tearDown(() {
+      scrollController.dispose();
     });
 
     testWidgets('brings item above leading edge to leading edge', (WidgetTester tester) async {
@@ -642,10 +646,6 @@ void main() {
 Future<void> flingUp(WidgetTester tester, { int repetitions = 1 }) => fling(tester, const Offset(0.0, -200.0), repetitions);
 
 Future<void> flingDown(WidgetTester tester, { int repetitions = 1 }) => fling(tester, const Offset(0.0, 200.0), repetitions);
-
-Future<void> flingRight(WidgetTester tester, { int repetitions = 1 }) => fling(tester, const Offset(200.0, 0.0), repetitions);
-
-Future<void> flingLeft(WidgetTester tester, { int repetitions = 1 }) => fling(tester, const Offset(-200.0, 0.0), repetitions);
 
 Future<void> fling(WidgetTester tester, Offset offset, int repetitions) async {
   while (repetitions-- > 0) {

@@ -38,7 +38,7 @@ Future<void> main() async {
     ),
   ));
 
-  await SchedulerBinding.instance!.endOfFrame;
+  await SchedulerBinding.instance.endOfFrame;
 
   // We are waiting for the GPU to rasterize a frame here. This makes this
   // flaky, we can rely on a more deterministic source such as
@@ -48,7 +48,7 @@ Future<void> main() async {
   debugPrint('==== MEMORY BENCHMARK ==== READY ====');
 
   final WidgetController controller =
-      LiveWidgetController(WidgetsBinding.instance!);
+      LiveWidgetController(WidgetsBinding.instance);
 
   debugPrint('Scrolling...');
   final Finder list = find.byKey(const Key('ImageList'));
@@ -56,7 +56,7 @@ Future<void> main() async {
   do {
     await controller.drag(list, const Offset(0.0, -30.0));
     await Future<void>.delayed(const Duration(milliseconds: 20));
-  } while (!lastItem.precache());
+  } while (!lastItem.tryEvaluate());
 
   debugPrint('==== MEMORY BENCHMARK ==== DONE ====');
 }

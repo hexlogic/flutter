@@ -10,7 +10,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../image_data.dart';
 import '../painting/mocks_for_image_cache.dart';
-import '../rendering/mock_canvas.dart';
 import 'test_border.dart' show TestBorder;
 
 Future<void> main() async {
@@ -22,8 +21,8 @@ Future<void> main() async {
       MaterialApp(
         home: DecoratedBox(
           decoration: ShapeDecoration(
-            shape: Border.all(width: 1.0, color: Colors.white) +
-                   Border.all(width: 1.0, color: Colors.black),
+            shape: Border.all(color: Colors.white) +
+                   Border.all(),
             image: DecorationImage(
               image: image,
             ),
@@ -45,8 +44,8 @@ Future<void> main() async {
       MaterialApp(
         home: DecoratedBox(
           decoration: ShapeDecoration(
-            shape: Border.all(width: 1.0, color: Colors.white) +
-                   Border.all(width: 1.0, color: Colors.black),
+            shape: Border.all(color: Colors.white) +
+                   Border.all(),
             color: Colors.blue,
           ),
         ),
@@ -55,7 +54,7 @@ Future<void> main() async {
     expect(
       find.byType(DecoratedBox),
       paints
-        ..path(color: Color(Colors.blue.value))
+        ..rect(color: Color(Colors.blue.value))
         ..rect(color: Colors.black)
         ..rect(color: Colors.white),
     );

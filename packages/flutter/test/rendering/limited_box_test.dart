@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'rendering_tester.dart';
 
 void main() {
+  TestRenderingFlutterBinding.ensureInitialized();
+
   test('LimitedBox: parent max size is unconstrained', () {
     final RenderBox child = RenderConstrainedBox(
       additionalConstraints: const BoxConstraints.tightFor(width: 300.0, height: 400.0),
@@ -40,6 +42,7 @@ void main() {
         ' │ maxWidth: Infinity\n'
         ' │ minHeight: 0.0\n'
         ' │ maxHeight: Infinity\n'
+        ' │ fit: max\n'
         ' │\n'
         ' └─child: RenderLimitedBox#00000 relayoutBoundary=up1 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE\n'
         '   │ parentData: offset=Offset(350.0, 200.0) (can use size)\n'
@@ -126,6 +129,7 @@ void main() {
         ' │ maxWidth: 500.0\n'
         ' │ minHeight: 0.0\n'
         ' │ maxHeight: Infinity\n'
+        ' │ fit: max\n'
         ' │\n'
         ' └─child: RenderLimitedBox#00000 relayoutBoundary=up1 NEEDS-PAINT\n'
         '     parentData: offset=Offset(395.0, 300.0) (can use size)\n'
@@ -162,6 +166,7 @@ void main() {
         ' │ maxWidth: use parent maxWidth constraint\n'
         ' │ minHeight: use parent minHeight constraint\n'
         ' │ maxHeight: use parent maxHeight constraint\n'
+        ' │ fit: max\n'
         ' │\n'
         ' └─child: RenderLimitedBox#00000 relayoutBoundary=up1 NEEDS-PAINT\n'
         '     parentData: offset=Offset(395.0, 0.0) (can use size)\n'

@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// @dart = 2.8
-
 // This test runs `flutter test` on the `trivial_widget_test.dart` four times.
 //
 // The first time, the result is ignored, on the basis that it's warming the
@@ -40,14 +38,13 @@ enum TestStep {
 
 Future<int> runTest({bool coverage = false, bool noPub = false}) async {
   final Stopwatch clock = Stopwatch()..start();
-  final List<String> arguments = flutterCommandArgs('test', <String>[
-    if (coverage) '--coverage',
-    if (noPub) '--no-pub',
-    path.join('flutter_test', 'trivial_widget_test.dart'),
-  ]);
-  final Process analysis = await startProcess(
-    path.join(flutterDirectory.path, 'bin', 'flutter'),
-    arguments,
+  final Process analysis = await startFlutter(
+    'test',
+    options: <String>[
+      if (coverage) '--coverage',
+      if (noPub) '--no-pub',
+      path.join('flutter_test', 'trivial_widget_test.dart'),
+    ],
     workingDirectory: path.join(flutterDirectory.path, 'dev', 'automated_tests'),
   );
   int badLines = 0;
@@ -67,11 +64,11 @@ Future<int> runTest({bool coverage = false, bool noPub = false}) async {
       // we have a blank line at the start
       step = TestStep.testWritesFirstCarriageReturn;
     } else {
-      final Match match = testOutputPattern.matchAsPrefix(entry);
+      final Match? match = testOutputPattern.matchAsPrefix(entry);
       if (match == null) {
         badLines += 1;
       } else {
-        if (step.index >= TestStep.testWritesFirstCarriageReturn.index && step.index <= TestStep.testLoading.index && match.group(1).startsWith('loading ')) {
+        if (step.index >= TestStep.testWritesFirstCarriageReturn.index && step.index <= TestStep.testLoading.index && match.group(1)!.startsWith('loading ')) {
           // first the test loads
           step = TestStep.testLoading;
         } else if (step.index <= TestStep.testRunning.index && match.group(1) == 'A trivial widget test') {
@@ -92,12 +89,15 @@ Future<int> runTest({bool coverage = false, bool noPub = false}) async {
   });
   final int result = await analysis.exitCode;
   clock.stop();
-  if (result != 0)
+  if (result != 0) {
     throw Exception('flutter test failed with exit code $result');
-  if (badLines > 0)
+  }
+  if (badLines > 0) {
     throw Exception('flutter test rendered unexpected output ($badLines bad lines)');
-  if (step != TestStep.testPassed)
+  }
+  if (step != TestStep.testPassed) {
     throw Exception('flutter test did not finish (only reached step $step)');
+  }
   print('elapsed time: ${clock.elapsedMilliseconds}ms');
   return clock.elapsedMilliseconds;
 }

@@ -2,9 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:ui';
+
 import 'package:flutter/rendering.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:leak_tracker_flutter_testing/leak_tracker_flutter_testing.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 import '../rendering/rendering_tester.dart';
@@ -12,6 +14,8 @@ import '../rendering/rendering_tester.dart';
 const int kMaxFrameworkAccessibilityIdentifier = (1<<16) - 1;
 
 void main() {
+  TestRenderingFlutterBinding.ensureInitialized();
+
   setUp(() {
     debugResetSemanticsIdCounter();
   });
@@ -55,7 +59,6 @@ void main() {
         config: config,
         childrenInInversePaintOrder: <SemanticsNode>[
           SemanticsNode()
-            ..isMergedIntoParent = true
             ..rect = const Rect.fromLTRB(5.0, 5.0, 10.0, 10.0)
             ..tags = tags,
         ],
@@ -70,6 +73,10 @@ void main() {
       expect(config.label, 'label1');
       expect(config.attributedLabel.string, 'label1');
       expect(config.attributedLabel.attributes.isEmpty, isTrue);
+      expect(
+        (SemanticsNode()..updateWith(config: config)).toString(),
+        'SemanticsNode#1(STALE, owner: null, Rect.fromLTRB(0.0, 0.0, 0.0, 0.0), invisible, label: "label1")',
+      );
 
       config.attributedLabel = AttributedString(
         'label2',
@@ -82,16 +89,28 @@ void main() {
       expect(config.attributedLabel.attributes.length, 1);
       expect(config.attributedLabel.attributes[0] is SpellOutStringAttribute, isTrue);
       expect(config.attributedLabel.attributes[0].range, const TextRange(start: 0, end: 1));
+      expect(
+        (SemanticsNode()..updateWith(config: config)).toString(),
+        'SemanticsNode#2(STALE, owner: null, Rect.fromLTRB(0.0, 0.0, 0.0, 0.0), invisible, label: "label2" [SpellOutStringAttribute(TextRange(start: 0, end: 1))])',
+      );
 
       config.label = 'label3';
       expect(config.label, 'label3');
       expect(config.attributedLabel.string, 'label3');
       expect(config.attributedLabel.attributes.isEmpty, isTrue);
+      expect(
+        (SemanticsNode()..updateWith(config: config)).toString(),
+        'SemanticsNode#3(STALE, owner: null, Rect.fromLTRB(0.0, 0.0, 0.0, 0.0), invisible, label: "label3")',
+      );
 
       config.value = 'value1';
       expect(config.value, 'value1');
       expect(config.attributedValue.string, 'value1');
       expect(config.attributedValue.attributes.isEmpty, isTrue);
+      expect(
+        (SemanticsNode()..updateWith(config: config)).toString(),
+        'SemanticsNode#4(STALE, owner: null, Rect.fromLTRB(0.0, 0.0, 0.0, 0.0), invisible, label: "label3", value: "value1")',
+      );
 
       config.attributedValue = AttributedString(
           'value2',
@@ -104,16 +123,28 @@ void main() {
       expect(config.attributedValue.attributes.length, 1);
       expect(config.attributedValue.attributes[0] is SpellOutStringAttribute, isTrue);
       expect(config.attributedValue.attributes[0].range, const TextRange(start: 0, end: 1));
+      expect(
+        (SemanticsNode()..updateWith(config: config)).toString(),
+        'SemanticsNode#5(STALE, owner: null, Rect.fromLTRB(0.0, 0.0, 0.0, 0.0), invisible, label: "label3", value: "value2" [SpellOutStringAttribute(TextRange(start: 0, end: 1))])',
+      );
 
       config.value = 'value3';
       expect(config.value, 'value3');
       expect(config.attributedValue.string, 'value3');
       expect(config.attributedValue.attributes.isEmpty, isTrue);
+      expect(
+        (SemanticsNode()..updateWith(config: config)).toString(),
+        'SemanticsNode#6(STALE, owner: null, Rect.fromLTRB(0.0, 0.0, 0.0, 0.0), invisible, label: "label3", value: "value3")',
+      );
 
       config.hint = 'hint1';
       expect(config.hint, 'hint1');
       expect(config.attributedHint.string, 'hint1');
       expect(config.attributedHint.attributes.isEmpty, isTrue);
+      expect(
+        (SemanticsNode()..updateWith(config: config)).toString(),
+        'SemanticsNode#7(STALE, owner: null, Rect.fromLTRB(0.0, 0.0, 0.0, 0.0), invisible, label: "label3", value: "value3", hint: "hint1")',
+      );
 
       config.attributedHint = AttributedString(
           'hint2',
@@ -126,11 +157,148 @@ void main() {
       expect(config.attributedHint.attributes.length, 1);
       expect(config.attributedHint.attributes[0] is SpellOutStringAttribute, isTrue);
       expect(config.attributedHint.attributes[0].range, const TextRange(start: 0, end: 1));
+      expect(
+        (SemanticsNode()..updateWith(config: config)).toString(),
+        'SemanticsNode#8(STALE, owner: null, Rect.fromLTRB(0.0, 0.0, 0.0, 0.0), invisible, label: "label3", value: "value3", hint: "hint2" [SpellOutStringAttribute(TextRange(start: 0, end: 1))])',
+      );
 
       config.hint = 'hint3';
       expect(config.hint, 'hint3');
       expect(config.attributedHint.string, 'hint3');
       expect(config.attributedHint.attributes.isEmpty, isTrue);
+      expect(
+        (SemanticsNode()..updateWith(config: config)).toString(),
+        'SemanticsNode#9(STALE, owner: null, Rect.fromLTRB(0.0, 0.0, 0.0, 0.0), invisible, label: "label3", value: "value3", hint: "hint3")',
+      );
+    });
+
+    test('provides the correct isMergedIntoParent value', () {
+      final SemanticsNode root = SemanticsNode()..rect = const Rect.fromLTRB(0.0, 0.0, 10.0, 10.0);
+      final SemanticsNode node1 = SemanticsNode()..rect = const Rect.fromLTRB(1.0, 0.0, 10.0, 10.0);
+      final SemanticsNode node11 = SemanticsNode()..rect = const Rect.fromLTRB(2.0, 0.0, 10.0, 10.0);
+      final SemanticsNode node12 = SemanticsNode()..rect = const Rect.fromLTRB(3.0, 0.0, 10.0, 10.0);
+
+      final SemanticsConfiguration noMergeConfig = SemanticsConfiguration()
+        ..isSemanticBoundary = true
+        ..isMergingSemanticsOfDescendants = false;
+
+      final SemanticsConfiguration mergeConfig = SemanticsConfiguration()
+        ..isSemanticBoundary = true
+        ..isMergingSemanticsOfDescendants = true;
+
+      node1.updateWith(config: noMergeConfig, childrenInInversePaintOrder: <SemanticsNode>[node11, node12]);
+
+      expect(node1.isMergedIntoParent, false);
+      expect(node1.mergeAllDescendantsIntoThisNode, false);
+      expect(node11.isMergedIntoParent, false);
+      expect(node12.isMergedIntoParent, false);
+      expect(root.isMergedIntoParent, false);
+
+      root.updateWith(config: mergeConfig, childrenInInversePaintOrder: <SemanticsNode>[node1]);
+      expect(node1.isMergedIntoParent, true);
+      expect(node1.mergeAllDescendantsIntoThisNode, false);
+      expect(node11.isMergedIntoParent, true);
+      expect(node12.isMergedIntoParent, true);
+      expect(root.isMergedIntoParent, false);
+      expect(root.mergeAllDescendantsIntoThisNode, true);
+
+      // Change config
+      node1.updateWith(config: mergeConfig, childrenInInversePaintOrder: <SemanticsNode>[node11, node12]);
+      expect(node1.isMergedIntoParent, true);
+      expect(node1.mergeAllDescendantsIntoThisNode, true);
+      expect(node11.isMergedIntoParent, true);
+      expect(node12.isMergedIntoParent, true);
+      expect(root.isMergedIntoParent, false);
+      expect(root.mergeAllDescendantsIntoThisNode, true);
+
+      root.updateWith(config: noMergeConfig, childrenInInversePaintOrder: <SemanticsNode>[node1]);
+      expect(node1.isMergedIntoParent, false);
+      expect(node1.mergeAllDescendantsIntoThisNode, true);
+      expect(node11.isMergedIntoParent, true);
+      expect(node12.isMergedIntoParent, true);
+      expect(root.isMergedIntoParent, false);
+      expect(root.mergeAllDescendantsIntoThisNode, false);
+    });
+
+    test('sendSemanticsUpdate verifies no invisible nodes', () {
+      const Rect invisibleRect = Rect.fromLTRB(0.0, 0.0, 0.0, 10.0);
+      const Rect visibleRect = Rect.fromLTRB(0.0, 0.0, 10.0, 10.0);
+
+      final SemanticsOwner owner = SemanticsOwner(
+        onSemanticsUpdate: (SemanticsUpdate update) {},
+      );
+      final SemanticsNode root = SemanticsNode.root(owner: owner)..rect = invisibleRect;
+      final SemanticsNode child = SemanticsNode();
+
+      // It's ok to have an invisible root.
+      expect(owner.sendSemanticsUpdate, returnsNormally);
+
+      // It's ok to have an invisible child if it's merged to an ancestor.
+      root
+        ..rect = visibleRect
+        ..updateWith(
+        config: SemanticsConfiguration()
+          ..isSemanticBoundary = true
+          ..isMergingSemanticsOfDescendants = true,
+        childrenInInversePaintOrder: <SemanticsNode>[child..rect = invisibleRect],
+      );
+      expect(owner.sendSemanticsUpdate, returnsNormally);
+
+      // It's ok if all nodes are visible.
+      root
+        ..rect = visibleRect
+        ..updateWith(
+        config: SemanticsConfiguration()
+          ..isSemanticBoundary = true
+          ..isMergingSemanticsOfDescendants = false,
+        childrenInInversePaintOrder: <SemanticsNode>[child..rect = visibleRect],
+      );
+      expect(owner.sendSemanticsUpdate, returnsNormally);
+
+      // Invisible root with children bad.
+      root
+        ..rect = invisibleRect
+        ..updateWith(
+        config: SemanticsConfiguration()
+          ..isSemanticBoundary = true
+          ..isMergingSemanticsOfDescendants = true,
+        childrenInInversePaintOrder: <SemanticsNode>[child..rect = invisibleRect],
+      );
+      expect(owner.sendSemanticsUpdate, throwsA(isA<FlutterError>().having(
+        (FlutterError error) => error.message, 'message', equals(
+          'Invisible SemanticsNodes should not be added to the tree.\n'
+          'The following invisible SemanticsNodes were added to the tree:\n'
+          'SemanticsNode#0(dirty, merge boundary ⛔️, Rect.fromLTRB(0.0, 0.0, 0.0, 10.0), invisible)\n'
+          'which was added as the root SemanticsNode\n'
+          'An invisible SemanticsNode is one whose rect is not on screen hence not reachable for users, and its semantic information is not merged into a visible parent.\n'
+          'An invisible SemantiscNode makes the accessibility experience confusing, as it does not provide any visual indication when the user selects it via accessibility technologies.\n'
+          'Consider removing the above invisible SemanticsNodes if they were added by your RenderObject.assembleSemanticsNode implementation, or filing a bug on GitHub:\n'
+          '  https://github.com/flutter/flutter/issues/new?template=2_bug.yml'
+        ),
+      )));
+
+      // Invisible children bad.
+      root
+        ..rect = visibleRect
+        ..updateWith(
+        config: SemanticsConfiguration()
+          ..isSemanticBoundary = true
+          ..isMergingSemanticsOfDescendants = false,
+        childrenInInversePaintOrder: <SemanticsNode>[child..rect = invisibleRect],
+      );
+      expect(owner.sendSemanticsUpdate, throwsA(isA<FlutterError>().having(
+        (FlutterError error) => error.message, 'message', equals(
+          'Invisible SemanticsNodes should not be added to the tree.\n'
+          'The following invisible SemanticsNodes were added to the tree:\n'
+          'SemanticsNode#1(dirty, Rect.fromLTRB(0.0, 0.0, 0.0, 10.0), invisible)\n'
+          'which was added as a child of:\n'
+          '  SemanticsNode#0(dirty, Rect.fromLTRB(0.0, 0.0, 10.0, 10.0))\n'
+          'An invisible SemanticsNode is one whose rect is not on screen hence not reachable for users, and its semantic information is not merged into a visible parent.\n'
+          'An invisible SemantiscNode makes the accessibility experience confusing, as it does not provide any visual indication when the user selects it via accessibility technologies.\n'
+          'Consider removing the above invisible SemanticsNodes if they were added by your RenderObject.assembleSemanticsNode implementation, or filing a bug on GitHub:\n'
+          '  https://github.com/flutter/flutter/issues/new?template=2_bug.yml'
+        ),
+      )));
     });
 
     test('mutate existing semantic node list errors', () {
@@ -143,7 +311,6 @@ void main() {
 
       final List<SemanticsNode> children = <SemanticsNode>[
         SemanticsNode()
-          ..isMergedIntoParent = true
           ..rect = const Rect.fromLTRB(5.0, 5.0, 10.0, 10.0),
       ];
 
@@ -154,8 +321,7 @@ void main() {
 
       children.add(
         SemanticsNode()
-          ..isMergedIntoParent = true
-          ..rect = const Rect.fromLTRB(42.0, 42.0, 10.0, 10.0),
+          ..rect = const Rect.fromLTRB(42.0, 42.0, 52.0, 52.0),
       );
 
       {
@@ -184,10 +350,8 @@ void main() {
         late FlutterError error;
         final List<SemanticsNode> modifiedChildren = <SemanticsNode>[
           SemanticsNode()
-            ..isMergedIntoParent = true
             ..rect = const Rect.fromLTRB(5.0, 5.0, 10.0, 10.0),
           SemanticsNode()
-            ..isMergedIntoParent = true
             ..rect = const Rect.fromLTRB(10.0, 10.0, 20.0, 20.0),
         ];
         node.updateWith(
@@ -196,11 +360,9 @@ void main() {
         );
         try {
           modifiedChildren[0] = SemanticsNode()
-            ..isMergedIntoParent = true
             ..rect = const Rect.fromLTRB(0.0, 0.0, 20.0, 20.0);
           modifiedChildren[1] = SemanticsNode()
-            ..isMergedIntoParent = true
-            ..rect = const Rect.fromLTRB(40.0, 14.0, 20.0, 20.0);
+            ..rect = const Rect.fromLTRB(40.0, 14.0, 60.0, 60.0);
           node.updateWith(
             config: config,
             childrenInInversePaintOrder: modifiedChildren,
@@ -216,12 +378,12 @@ void main() {
           '   containing the desired `SemanticsNode`s.\n'
           '   Error details:\n'
           '   Child node at position 0 was replaced:\n'
-          '   Previous child: SemanticsNode#6(STALE, owner: null, merged up ⬆️, Rect.fromLTRB(0.0, 0.0, 20.0, 20.0))\n'
-          '   New child: SemanticsNode#4(STALE, owner: null, merged up ⬆️, Rect.fromLTRB(5.0, 5.0, 10.0, 10.0))\n'
+          '   Previous child: SemanticsNode#4(STALE, owner: null, merged up ⬆️, Rect.fromLTRB(5.0, 5.0, 10.0, 10.0))\n'
+          '   New child: SemanticsNode#6(STALE, owner: null, merged up ⬆️, Rect.fromLTRB(0.0, 0.0, 20.0, 20.0))\n'
           '\n'
           '   Child node at position 1 was replaced:\n'
-          '   Previous child: SemanticsNode#7(STALE, owner: null, merged up ⬆️, Rect.fromLTRB(40.0, 14.0, 20.0, 20.0))\n'
-          '   New child: SemanticsNode#5(STALE, owner: null, merged up ⬆️, Rect.fromLTRB(10.0, 10.0, 20.0, 20.0))\n',
+          '   Previous child: SemanticsNode#5(STALE, owner: null, merged up ⬆️, Rect.fromLTRB(10.0, 10.0, 20.0, 20.0))\n'
+          '   New child: SemanticsNode#7(STALE, owner: null, merged up ⬆️, Rect.fromLTRB(40.0, 14.0, 60.0, 60.0))\n',
         ));
 
         expect(
@@ -234,7 +396,8 @@ void main() {
     });
 
     test('after markNeedsSemanticsUpdate() all render objects between two semantic boundaries are asked for annotations', () {
-      renderer.pipelineOwner.ensureSemantics();
+      final SemanticsHandle handle = TestRenderingFlutterBinding.instance.ensureSemantics();
+      addTearDown(handle.dispose);
 
       TestRender middle;
       final TestRender root = TestRender(
@@ -242,13 +405,10 @@ void main() {
         isSemanticBoundary: true,
         child: TestRender(
           hasLongPressAction: true,
-          isSemanticBoundary: false,
           child: middle = TestRender(
             hasScrollLeftAction: true,
-            isSemanticBoundary: false,
             child: TestRender(
               hasScrollRightAction: true,
-              isSemanticBoundary: false,
               child: TestRender(
                 hasScrollUpAction: true,
                 isSemanticBoundary: true,
@@ -293,7 +453,7 @@ void main() {
     expect(child2.transform, isNull);
 
     expect(
-      root.toStringDeep(childOrder: DebugSemanticsDumpOrder.traversalOrder),
+      root.toStringDeep(),
       'SemanticsNode#3\n'
       ' │ STALE\n'
       ' │ owner: null\n'
@@ -379,7 +539,7 @@ void main() {
       childrenInInversePaintOrder: <SemanticsNode>[child1, child2],
     );
     expect(
-      root.toStringDeep(childOrder: DebugSemanticsDumpOrder.traversalOrder),
+      root.toStringDeep(),
       'SemanticsNode#3\n'
       ' │ STALE\n'
       ' │ owner: null\n'
@@ -434,7 +594,7 @@ void main() {
     );
 
     expect(
-      rootComplex.toStringDeep(childOrder: DebugSemanticsDumpOrder.traversalOrder),
+      rootComplex.toStringDeep(),
       'SemanticsNode#7\n'
       ' │ STALE\n'
       ' │ owner: null\n'
@@ -522,11 +682,13 @@ void main() {
       '   flags: []\n'
       '   invisible\n'
       '   isHidden: false\n'
+      '   identifier: ""\n'
       '   label: ""\n'
       '   value: ""\n'
       '   increasedValue: ""\n'
       '   decreasedValue: ""\n'
       '   hint: ""\n'
+      '   tooltip: ""\n'
       '   textDirection: null\n'
       '   sortKey: null\n'
       '   platformViewId: null\n'
@@ -556,7 +718,7 @@ void main() {
     final SemanticsNode allProperties = SemanticsNode()
       ..rect = const Rect.fromLTWH(50.0, 10.0, 20.0, 30.0)
       ..transform = Matrix4.translation(Vector3(10.0, 10.0, 0.0))
-      ..updateWith(config: config, childrenInInversePaintOrder: null);
+      ..updateWith(config: config);
     expect(
       allProperties.toStringDeep(),
       equalsIgnoringHashCodes(
@@ -593,6 +755,30 @@ void main() {
     );
   });
 
+  test('blocked actions debug properties', () {
+    final SemanticsConfiguration config = SemanticsConfiguration()
+      ..isBlockingUserActions = true
+      ..onScrollUp = () { }
+      ..onLongPress = () { }
+      ..onShowOnScreen = () { }
+      ..onDidGainAccessibilityFocus = () { };
+    final SemanticsNode blocked = SemanticsNode()
+      ..rect = const Rect.fromLTWH(50.0, 10.0, 20.0, 30.0)
+      ..transform = Matrix4.translation(Vector3(10.0, 10.0, 0.0))
+      ..updateWith(config: config);
+    expect(
+      blocked.toStringDeep(),
+      equalsIgnoringHashCodes(
+        'SemanticsNode#1\n'
+        '   STALE\n'
+        '   owner: null\n'
+        '   Rect.fromLTRB(60.0, 20.0, 80.0, 50.0)\n'
+        '   actions: didGainAccessibilityFocus, longPress🚫️, scrollUp🚫️,\n'
+        '     showOnScreen🚫️\n',
+      ),
+    );
+  });
+
   test('Custom actions debug properties', () {
     final SemanticsConfiguration configuration = SemanticsConfiguration();
     const CustomSemanticsAction action1 = CustomSemanticsAction(label: 'action1');
@@ -620,11 +806,13 @@ void main() {
       '   flags: []\n'
       '   invisible\n'
       '   isHidden: false\n'
+      '   identifier: ""\n'
       '   label: ""\n'
       '   value: ""\n'
       '   increasedValue: ""\n'
       '   decreasedValue: ""\n'
       '   hint: ""\n'
+      '   tooltip: ""\n'
       '   textDirection: null\n'
       '   sortKey: null\n'
       '   platformViewId: null\n'
@@ -640,7 +828,7 @@ void main() {
     );
   });
 
-  test('Attributed String can concate', () {
+  test('Attributed String can concat', () {
     final AttributedString string1 = AttributedString(
       'string1',
       attributes: <StringAttribute>[
@@ -658,10 +846,13 @@ void main() {
     expect(result.attributes.length, 2);
     expect(result.attributes[0].range, const TextRange(start:0, end:4));
     expect(result.attributes[0] is SpellOutStringAttribute, isTrue);
+    expect(result.toString(), "AttributedString('string1string2', attributes: [SpellOutStringAttribute(TextRange(start: 0, end: 4)), LocaleStringAttribute(TextRange(start: 7, end: 11), es-MX)])");
   });
 
   test('Semantics id does not repeat', () {
-    final SemanticsOwner owner = SemanticsOwner();
+    final SemanticsOwner owner = SemanticsOwner(
+      onSemanticsUpdate: (SemanticsUpdate update) {},
+    );
     const int expectId = 1400;
     SemanticsNode? nodeToRemove;
     for (int i = 0; i < kMaxFrameworkAccessibilityIdentifier; i++) {
@@ -777,6 +968,16 @@ void main() {
     expect(config.onTap, same(onTap));
     expect(config.customSemanticsActions[customAction], same(onCustomAction));
   });
+
+  test('SemanticsOwner dispatches memory events', () async {
+    await expectLater(
+      await memoryEvents(() =>  SemanticsOwner(
+        onSemanticsUpdate: (SemanticsUpdate update) {},
+      ).dispose(), SemanticsOwner),
+      areCreateAndDispose,
+    );
+  });
+
 }
 
 class TestRender extends RenderProxyBox {
@@ -805,21 +1006,27 @@ class TestRender extends RenderProxyBox {
     super.describeSemanticsConfiguration(config);
 
     config.isSemanticBoundary = isSemanticBoundary;
-    if (hasTapAction)
+    if (hasTapAction) {
       config.onTap = () { };
-    if (hasLongPressAction)
+    }
+    if (hasLongPressAction) {
       config.onLongPress = () { };
-    if (hasScrollLeftAction)
+    }
+    if (hasScrollLeftAction) {
       config.onScrollLeft = () { };
-    if (hasScrollRightAction)
+    }
+    if (hasScrollRightAction) {
       config.onScrollRight = () { };
-    if (hasScrollUpAction)
+    }
+    if (hasScrollUpAction) {
       config.onScrollUp = () { };
-    if (hasScrollDownAction)
+    }
+    if (hasScrollDownAction) {
       config.onScrollDown = () { };
+    }
   }
 }
 
 class CustomSortKey extends OrdinalSortKey {
-  const CustomSortKey(double order, {String? name}) : super(order, name: name);
+  const CustomSortKey(super.order, {super.name});
 }

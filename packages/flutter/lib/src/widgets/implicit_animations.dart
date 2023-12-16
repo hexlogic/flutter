@@ -18,10 +18,10 @@ import 'transitions.dart';
 
 // Examples can assume:
 // class MyWidget extends ImplicitlyAnimatedWidget {
-//   const MyWidget({Key? key, this.targetColor = Colors.black}) : super(key: key, duration: const Duration(seconds: 1));
+//   const MyWidget({super.key, this.targetColor = Colors.black}) : super(duration: const Duration(seconds: 1));
 //   final Color targetColor;
 //   @override
-//   MyWidgetState createState() => MyWidgetState();
+//   ImplicitlyAnimatedWidgetState<MyWidget> createState() => throw UnimplementedError(); // ignore: no_logic_in_create_state
 // }
 // void setState(VoidCallback fn) { }
 
@@ -36,7 +36,7 @@ class BoxConstraintsTween extends Tween<BoxConstraints> {
   ///
   /// The [begin] and [end] properties may be null; the null value
   /// is treated as a tight constraint of zero size.
-  BoxConstraintsTween({ BoxConstraints? begin, BoxConstraints? end }) : super(begin: begin, end: end);
+  BoxConstraintsTween({ super.begin, super.end });
 
   /// Returns the value this variable has at the given animation clock value.
   @override
@@ -67,7 +67,7 @@ class DecorationTween extends Tween<Decoration> {
   /// result is always null. If [end] is not null, then its lerping logic is
   /// used (via [Decoration.lerpTo]). Otherwise, [begin]'s lerping logic is used
   /// (via [Decoration.lerpFrom]).
-  DecorationTween({ Decoration? begin, Decoration? end }) : super(begin: begin, end: end);
+  DecorationTween({ super.begin, super.end });
 
   /// Returns the value this variable has at the given animation clock value.
   @override
@@ -90,7 +90,7 @@ class EdgeInsetsTween extends Tween<EdgeInsets> {
   ///
   /// The [begin] and [end] properties may be null; the null value
   /// is treated as an [EdgeInsets] with no inset.
-  EdgeInsetsTween({ EdgeInsets? begin, EdgeInsets? end }) : super(begin: begin, end: end);
+  EdgeInsetsTween({ super.begin, super.end });
 
   /// Returns the value this variable has at the given animation clock value.
   @override
@@ -112,7 +112,7 @@ class EdgeInsetsGeometryTween extends Tween<EdgeInsetsGeometry> {
   ///
   /// The [begin] and [end] properties may be null; the null value
   /// is treated as an [EdgeInsetsGeometry] with no inset.
-  EdgeInsetsGeometryTween({ EdgeInsetsGeometry? begin, EdgeInsetsGeometry? end }) : super(begin: begin, end: end);
+  EdgeInsetsGeometryTween({ super.begin, super.end });
 
   /// Returns the value this variable has at the given animation clock value.
   @override
@@ -130,7 +130,7 @@ class BorderRadiusTween extends Tween<BorderRadius?> {
   ///
   /// The [begin] and [end] properties may be null; the null value
   /// is treated as a right angle (no radius).
-  BorderRadiusTween({ BorderRadius? begin, BorderRadius? end }) : super(begin: begin, end: end);
+  BorderRadiusTween({ super.begin, super.end });
 
   /// Returns the value this variable has at the given animation clock value.
   @override
@@ -148,7 +148,7 @@ class BorderTween extends Tween<Border?> {
   ///
   /// The [begin] and [end] properties may be null; the null value
   /// is treated as having no border.
-  BorderTween({ Border? begin, Border? end }) : super(begin: begin, end: end);
+  BorderTween({ super.begin, super.end });
 
   /// Returns the value this variable has at the given animation clock value.
   @override
@@ -169,7 +169,7 @@ class Matrix4Tween extends Tween<Matrix4> {
   /// The [begin] and [end] properties must be non-null before the tween is
   /// first used, but the arguments can be null if the values are going to be
   /// filled in later.
-  Matrix4Tween({ Matrix4? begin, Matrix4? end }) : super(begin: begin, end: end);
+  Matrix4Tween({ super.begin, super.end });
 
   @override
   Matrix4 lerp(double t) {
@@ -185,7 +185,7 @@ class Matrix4Tween extends Tween<Matrix4> {
     end!.decompose(endTranslation, endRotation, endScale);
     final Vector3 lerpTranslation =
         beginTranslation * (1.0 - t) + endTranslation * t;
-    // TODO(alangardner): Implement slerp for constant rotation
+    // TODO(alangardner): Implement lerp for constant rotation
     final Quaternion lerpRotation =
         (beginRotation.scaled(1.0 - t) + endRotation.scaled(t)).normalized();
     final Vector3 lerpScale = beginScale * (1.0 - t) + endScale * t;
@@ -207,7 +207,7 @@ class TextStyleTween extends Tween<TextStyle> {
   /// The [begin] and [end] properties must be non-null before the tween is
   /// first used, but the arguments can be null if the values are going to be
   /// filled in later.
-  TextStyleTween({ TextStyle? begin, TextStyle? end }) : super(begin: begin, end: end);
+  TextStyleTween({ super.begin, super.end });
 
   /// Returns the value this variable has at the given animation clock value.
   @override
@@ -257,6 +257,7 @@ class TextStyleTween extends Tween<TextStyle> {
 ///    [DefaultTextStyle].
 ///  * [AnimatedScale], which is an implicitly animated version of [Transform.scale].
 ///  * [AnimatedRotation], which is an implicitly animated version of [Transform.rotate].
+///  * [AnimatedSlide], which implicitly animates the position of a widget relative to its normal position.
 ///  * [AnimatedOpacity], which is an implicitly animated version of [Opacity].
 ///  * [AnimatedPadding], which is an implicitly animated version of [Padding].
 ///  * [AnimatedPhysicalModel], which is an implicitly animated version of
@@ -273,16 +274,12 @@ class TextStyleTween extends Tween<TextStyle> {
 ///  * [AnimatedSwitcher], which fades from one widget to another.
 abstract class ImplicitlyAnimatedWidget extends StatefulWidget {
   /// Initializes fields for subclasses.
-  ///
-  /// The [curve] and [duration] arguments must not be null.
   const ImplicitlyAnimatedWidget({
-    Key? key,
+    super.key,
     this.curve = Curves.linear,
     required this.duration,
     this.onEnd,
-  }) : assert(curve != null),
-       assert(duration != null),
-       super(key: key);
+  });
 
   /// The curve to apply when animating the parameters of this container.
   final Curve curve;
@@ -297,7 +294,7 @@ abstract class ImplicitlyAnimatedWidget extends StatefulWidget {
   final VoidCallback? onEnd;
 
   @override
-  ImplicitlyAnimatedWidgetState<ImplicitlyAnimatedWidget> createState(); // ignore: no_logic_in_create_state, https://github.com/dart-lang/linter/issues/2345
+  ImplicitlyAnimatedWidgetState<ImplicitlyAnimatedWidget> createState();
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
@@ -360,7 +357,7 @@ abstract class ImplicitlyAnimatedWidgetState<T extends ImplicitlyAnimatedWidget>
 
   /// The animation driving this widget's implicit animations.
   Animation<double> get animation => _animation;
-  late Animation<double> _animation = _createCurve();
+  late CurvedAnimation _animation = _createCurve();
 
   @override
   void initState() {
@@ -369,7 +366,6 @@ abstract class ImplicitlyAnimatedWidgetState<T extends ImplicitlyAnimatedWidget>
       switch (status) {
         case AnimationStatus.completed:
           widget.onEnd?.call();
-          break;
         case AnimationStatus.dismissed:
         case AnimationStatus.forward:
         case AnimationStatus.reverse:
@@ -383,7 +379,7 @@ abstract class ImplicitlyAnimatedWidgetState<T extends ImplicitlyAnimatedWidget>
   void didUpdateWidget(T oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.curve != oldWidget.curve) {
-      (_animation as CurvedAnimation).dispose();
+      _animation.dispose();
       _animation = _createCurve();
     }
     _controller.duration = widget.duration;
@@ -405,7 +401,7 @@ abstract class ImplicitlyAnimatedWidgetState<T extends ImplicitlyAnimatedWidget>
 
   @override
   void dispose() {
-    (_animation as CurvedAnimation).dispose();
+    _animation.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -415,8 +411,9 @@ abstract class ImplicitlyAnimatedWidgetState<T extends ImplicitlyAnimatedWidget>
   }
 
   void _updateTween(Tween<dynamic>? tween, dynamic targetValue) {
-    if (tween == null)
+    if (tween == null) {
       return;
+    }
     tween
       ..begin = tween.evaluate(_animation)
       ..end = targetValue;
@@ -427,8 +424,11 @@ abstract class ImplicitlyAnimatedWidgetState<T extends ImplicitlyAnimatedWidget>
     forEachTween((Tween<dynamic>? tween, dynamic targetValue, TweenConstructor<dynamic> constructor) {
       if (targetValue != null) {
         tween ??= constructor(targetValue);
-        if (_shouldAnimateTween(tween, targetValue))
+        if (_shouldAnimateTween(tween, targetValue)) {
           shouldStartAnimation = true;
+        } else {
+          tween.end ??= tween.begin;
+        }
       } else {
         tween = null;
       }
@@ -540,7 +540,7 @@ abstract class ImplicitlyAnimatedWidgetState<T extends ImplicitlyAnimatedWidget>
 /// A base class for widgets with implicit animations that need to rebuild their
 /// widget tree as the animation runs.
 ///
-/// This class calls [build] each frame that the animation tickets. For a
+/// This class calls [build] each frame that the animation ticks. For a
 /// variant that does not rebuild each frame, consider subclassing
 /// [ImplicitlyAnimatedWidgetState] directly.
 ///
@@ -574,37 +574,12 @@ abstract class AnimatedWidgetBaseState<T extends ImplicitlyAnimatedWidget> exten
 ///
 /// {@youtube 560 315 https://www.youtube.com/watch?v=yI-8QHpGIP4}
 ///
-/// {@tool dartpad --template=stateful_widget_scaffold}
-///
+/// {@tool dartpad}
 /// The following example (depicted above) transitions an AnimatedContainer
 /// between two states. It adjusts the `height`, `width`, `color`, and
 /// [alignment] properties when tapped.
 ///
-/// ```dart
-/// bool selected = false;
-///
-/// @override
-/// Widget build(BuildContext context) {
-///   return GestureDetector(
-///     onTap: () {
-///       setState(() {
-///         selected = !selected;
-///       });
-///     },
-///     child: Center(
-///       child: AnimatedContainer(
-///         width: selected ? 200.0 : 100.0,
-///         height: selected ? 100.0 : 200.0,
-///         color: selected ? Colors.red : Colors.blue,
-///         alignment: selected ? Alignment.center : AlignmentDirectional.topCenter,
-///         duration: const Duration(seconds: 2),
-///         curve: Curves.fastOutSlowIn,
-///         child: const FlutterLogo(size: 75),
-///       ),
-///     ),
-///   );
-/// }
-/// ```
+/// ** See code in examples/api/lib/widgets/implicit_animations/animated_container.0.dart **
 /// {@end-tool}
 ///
 /// See also:
@@ -616,15 +591,13 @@ abstract class AnimatedWidgetBaseState<T extends ImplicitlyAnimatedWidget> exten
 ///    transitions its child's position over a given duration whenever the given
 ///    position changes.
 ///  * [AnimatedAlign], which automatically transitions its child's
-///    position over a given duration whenever the given [alignment] changes.
+///    position over a given duration whenever the given [AnimatedAlign.alignment] changes.
 ///  * [AnimatedSwitcher], which switches out a child for a new one with a customizable transition.
 ///  * [AnimatedCrossFade], which fades between two children and interpolates their sizes.
 class AnimatedContainer extends ImplicitlyAnimatedWidget {
   /// Creates a container that animates its parameters implicitly.
-  ///
-  /// The [curve] and [duration] arguments must not be null.
   AnimatedContainer({
-    Key? key,
+    super.key,
     this.alignment,
     this.padding,
     Color? color,
@@ -638,9 +611,9 @@ class AnimatedContainer extends ImplicitlyAnimatedWidget {
     this.transformAlignment,
     this.child,
     this.clipBehavior = Clip.none,
-    Curve curve = Curves.linear,
-    required Duration duration,
-    VoidCallback? onEnd,
+    super.curve,
+    required super.duration,
+    super.onEnd,
   }) : assert(margin == null || margin.isNonNegative),
        assert(padding == null || padding.isNonNegative),
        assert(decoration == null || decoration.debugAssertIsValid()),
@@ -654,8 +627,7 @@ class AnimatedContainer extends ImplicitlyAnimatedWidget {
         (width != null || height != null)
           ? constraints?.tighten(width: width, height: height)
             ?? BoxConstraints.tightFor(width: width, height: height)
-          : constraints,
-       super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+          : constraints;
 
   /// The [child] contained by the container.
   ///
@@ -813,45 +785,11 @@ class _AnimatedContainerState extends AnimatedWidgetBaseState<AnimatedContainer>
 /// of [Curves.fastOutSlowIn].
 /// {@animation 250 266 https://flutter.github.io/assets-for-api-docs/assets/widgets/animated_padding.mp4}
 ///
-/// {@tool dartpad --template=stateful_widget_scaffold}
-///
+/// {@tool dartpad}
 /// The following code implements the [AnimatedPadding] widget, using a [curve] of
 /// [Curves.easeInOut].
 ///
-/// ```dart
-/// double padValue = 0.0;
-/// void _updatePadding(double value) {
-///   setState(() {
-///     padValue = value;
-///   });
-/// }
-///
-/// @override
-/// Widget build(BuildContext context) {
-///   return Column(
-///     mainAxisAlignment: MainAxisAlignment.center,
-///     children: <Widget>[
-///       AnimatedPadding(
-///         padding: EdgeInsets.all(padValue),
-///         duration: const Duration(seconds: 2),
-///         curve: Curves.easeInOut,
-///         child: Container(
-///           width: MediaQuery.of(context).size.width,
-///           height: MediaQuery.of(context).size.height / 5,
-///           color: Colors.blue,
-///         ),
-///       ),
-///       Text('Padding: $padValue'),
-///       ElevatedButton(
-///         child: const Text('Change padding'),
-///         onPressed: () {
-///           _updatePadding(padValue == 0.0 ? 100.0 : 0.0);
-///         }
-///       ),
-///     ],
-///   );
-/// }
-/// ```
+/// ** See code in examples/api/lib/widgets/implicit_animations/animated_padding.0.dart **
 /// {@end-tool}
 ///
 /// See also:
@@ -863,18 +801,14 @@ class _AnimatedContainerState extends AnimatedWidgetBaseState<AnimatedContainer>
 class AnimatedPadding extends ImplicitlyAnimatedWidget {
   /// Creates a widget that insets its child by a value that animates
   /// implicitly.
-  ///
-  /// The [padding], [curve], and [duration] arguments must not be null.
   AnimatedPadding({
-    Key? key,
+    super.key,
     required this.padding,
     this.child,
-    Curve curve = Curves.linear,
-    required Duration duration,
-    VoidCallback? onEnd,
-  }) : assert(padding != null),
-       assert(padding.isNonNegative),
-       super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+    super.curve,
+    required super.duration,
+    super.onEnd,
+  }) : assert(padding.isNonNegative);
 
   /// The amount of space by which to inset the child.
   final EdgeInsetsGeometry padding;
@@ -934,38 +868,11 @@ class _AnimatedPaddingState extends AnimatedWidgetBaseState<AnimatedPadding> {
 /// it also requires more development overhead as you have to manually manage
 /// the lifecycle of the underlying [AnimationController].
 ///
-/// {@tool dartpad --template=stateful_widget_scaffold}
-///
+/// {@tool dartpad}
 /// The following code implements the [AnimatedAlign] widget, using a [curve] of
 /// [Curves.fastOutSlowIn].
 ///
-/// ```dart
-/// bool selected = false;
-///
-/// @override
-/// Widget build(BuildContext context) {
-///   return GestureDetector(
-///     onTap: () {
-///       setState(() {
-///         selected = !selected;
-///       });
-///     },
-///     child: Center(
-///       child: Container(
-///         width: 250.0,
-///         height: 250.0,
-///         color: Colors.red,
-///         child: AnimatedAlign(
-///           alignment: selected ? Alignment.topRight : Alignment.bottomLeft,
-///           duration: const Duration(seconds: 1),
-///           curve: Curves.fastOutSlowIn,
-///           child: const FlutterLogo(size: 50.0),
-///         ),
-///       ),
-///     ),
-///   );
-/// }
-/// ```
+/// ** See code in examples/api/lib/widgets/implicit_animations/animated_align.0.dart **
 /// {@end-tool}
 ///
 /// See also:
@@ -973,27 +880,24 @@ class _AnimatedPaddingState extends AnimatedWidgetBaseState<AnimatedPadding> {
 ///  * [AnimatedContainer], which can transition more values at once.
 ///  * [AnimatedPadding], which can animate the padding instead of the
 ///    alignment.
+///  * [AnimatedSlide], which can animate the translation of child by a given offset relative to its size.
 ///  * [AnimatedPositioned], which, as a child of a [Stack], automatically
 ///    transitions its child's position over a given duration whenever the given
 ///    position changes.
 class AnimatedAlign extends ImplicitlyAnimatedWidget {
   /// Creates a widget that positions its child by an alignment that animates
   /// implicitly.
-  ///
-  /// The [alignment], [curve], and [duration] arguments must not be null.
   const AnimatedAlign({
-    Key? key,
+    super.key,
     required this.alignment,
     this.child,
     this.heightFactor,
     this.widthFactor,
-    Curve curve = Curves.linear,
-    required Duration duration,
-    VoidCallback? onEnd,
-  }) : assert(alignment != null),
-       assert(widthFactor == null || widthFactor >= 0.0),
-       assert(heightFactor == null || heightFactor >= 0.0),
-       super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+    super.curve,
+    required super.duration,
+    super.onEnd,
+  }) : assert(widthFactor == null || widthFactor >= 0.0),
+       assert(heightFactor == null || heightFactor >= 0.0);
 
   /// How to align the child.
   ///
@@ -1046,10 +950,10 @@ class _AnimatedAlignState extends AnimatedWidgetBaseState<AnimatedAlign> {
   @override
   void forEachTween(TweenVisitor<dynamic> visitor) {
     _alignment = visitor(_alignment, widget.alignment, (dynamic value) => AlignmentGeometryTween(begin: value as AlignmentGeometry)) as AlignmentGeometryTween?;
-    if(widget.heightFactor != null) {
+    if (widget.heightFactor != null) {
       _heightFactorTween = visitor(_heightFactorTween, widget.heightFactor, (dynamic value) => Tween<double>(begin: value as double)) as Tween<double>?;
     }
-    if(widget.widthFactor != null) {
+    if (widget.widthFactor != null) {
       _widthFactorTween = visitor(_widthFactorTween, widget.widthFactor, (dynamic value) => Tween<double>(begin: value as double)) as Tween<double>?;
     }
   }
@@ -1099,45 +1003,12 @@ class _AnimatedAlignState extends AnimatedWidgetBaseState<AnimatedAlign> {
 /// it also requires more development overhead as you have to manually manage
 /// the lifecycle of the underlying [AnimationController].
 ///
-/// {@tool dartpad --template=stateful_widget_scaffold_center}
-///
+/// {@tool dartpad}
 /// The following example transitions an AnimatedPositioned
 /// between two states. It adjusts the `height`, `width`, and
 /// [Positioned] properties when tapped.
 ///
-/// ```dart
-/// bool selected = false;
-///
-/// @override
-/// Widget build(BuildContext context) {
-///   return SizedBox(
-///     width: 200,
-///     height: 350,
-///     child: Stack(
-///       children: <Widget>[
-///         AnimatedPositioned(
-///           width: selected ? 200.0 : 50.0,
-///           height: selected ? 50.0 : 200.0,
-///           top: selected ? 50.0 : 150.0,
-///           duration: const Duration(seconds: 2),
-///           curve: Curves.fastOutSlowIn,
-///           child: GestureDetector(
-///             onTap: () {
-///               setState(() {
-///                 selected = !selected;
-///               });
-///             },
-///             child: Container(
-///               color: Colors.blue,
-///               child: const Center(child: Text('Tap me')),
-///             ),
-///           ),
-///         ),
-///       ],
-///     ),
-///   );
-/// }
-///```
+/// ** See code in examples/api/lib/widgets/implicit_animations/animated_positioned.0.dart **
 /// {@end-tool}
 ///
 /// See also:
@@ -1152,10 +1023,8 @@ class AnimatedPositioned extends ImplicitlyAnimatedWidget {
   /// [width]), and only two out of the three vertical values ([top],
   /// [bottom], [height]), can be set. In each case, at least one of
   /// the three must be null.
-  ///
-  /// The [curve] and [duration] arguments must not be null.
   const AnimatedPositioned({
-    Key? key,
+    super.key,
     required this.child,
     this.left,
     this.top,
@@ -1163,30 +1032,26 @@ class AnimatedPositioned extends ImplicitlyAnimatedWidget {
     this.bottom,
     this.width,
     this.height,
-    Curve curve = Curves.linear,
-    required Duration duration,
-    VoidCallback? onEnd,
+    super.curve,
+    required super.duration,
+    super.onEnd,
   }) : assert(left == null || right == null || width == null),
-       assert(top == null || bottom == null || height == null),
-       super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+       assert(top == null || bottom == null || height == null);
 
   /// Creates a widget that animates the rectangle it occupies implicitly.
-  ///
-  /// The [curve] and [duration] arguments must not be null.
   AnimatedPositioned.fromRect({
-    Key? key,
+    super.key,
     required this.child,
     required Rect rect,
-    Curve curve = Curves.linear,
-    required Duration duration,
-    VoidCallback? onEnd,
+    super.curve,
+    required super.duration,
+    super.onEnd,
   }) : left = rect.left,
        top = rect.top,
        width = rect.width,
        height = rect.height,
        right = null,
-       bottom = null,
-       super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+       bottom = null;
 
   /// The widget below this widget in the tree.
   ///
@@ -1305,10 +1170,8 @@ class AnimatedPositionedDirectional extends ImplicitlyAnimatedWidget {
   /// Only two out of the three horizontal values ([start], [end], [width]), and
   /// only two out of the three vertical values ([top], [bottom], [height]), can
   /// be set. In each case, at least one of the three must be null.
-  ///
-  /// The [curve] and [duration] arguments must not be null.
   const AnimatedPositionedDirectional({
-    Key? key,
+    super.key,
     required this.child,
     this.start,
     this.top,
@@ -1316,12 +1179,11 @@ class AnimatedPositionedDirectional extends ImplicitlyAnimatedWidget {
     this.bottom,
     this.width,
     this.height,
-    Curve curve = Curves.linear,
-    required Duration duration,
-    VoidCallback? onEnd,
+    super.curve,
+    required super.duration,
+    super.onEnd,
   }) : assert(start == null || end == null || width == null),
-       assert(top == null || bottom == null || height == null),
-       super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+       assert(top == null || bottom == null || height == null);
 
   /// The widget below this widget in the tree.
   ///
@@ -1422,7 +1284,7 @@ class _AnimatedPositionedDirectionalState extends AnimatedWidgetBaseState<Animat
 ///
 /// ```dart
 /// class LogoScale extends StatefulWidget {
-///   const LogoScale({Key? key}) : super(key: key);
+///   const LogoScale({super.key});
 ///
 ///   @override
 ///   State<LogoScale> createState() => LogoScaleState();
@@ -1441,8 +1303,8 @@ class _AnimatedPositionedDirectionalState extends AnimatedWidgetBaseState<Animat
 ///       mainAxisAlignment: MainAxisAlignment.center,
 ///       children: <Widget>[
 ///         ElevatedButton(
-///           child: const Text('Scale Logo'),
 ///           onPressed: _changeScale,
+///           child: const Text('Scale Logo'),
 ///         ),
 ///         Padding(
 ///           padding: const EdgeInsets.all(50),
@@ -1464,24 +1326,21 @@ class _AnimatedPositionedDirectionalState extends AnimatedWidgetBaseState<Animat
 ///  * [AnimatedRotation], for animating the rotation of a child.
 ///  * [AnimatedSize], for animating the resize of a child based on changes
 ///    in layout.
+///  * [AnimatedSlide], for animating the translation of a child by a given offset relative to its size.
 ///  * [ScaleTransition], an explicitly animated version of this widget, where
 ///    an [Animation] is provided by the caller instead of being built in.
 class AnimatedScale extends ImplicitlyAnimatedWidget {
   /// Creates a widget that animates its scale implicitly.
-  ///
-  /// The [scale] argument must not be null.
-  /// The [curve] and [duration] arguments must not be null.
   const AnimatedScale({
-    Key? key,
+    super.key,
     this.child,
     required this.scale,
     this.alignment = Alignment.center,
     this.filterQuality,
-    Curve curve = Curves.linear,
-    required Duration duration,
-    VoidCallback? onEnd,
-  }) : assert(scale != null),
-       super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+    super.curve,
+    required super.duration,
+    super.onEnd,
+  });
 
   /// The widget below this widget in the tree.
   ///
@@ -1489,8 +1348,6 @@ class AnimatedScale extends ImplicitlyAnimatedWidget {
   final Widget? child;
 
   /// The target scale.
-  ///
-  /// The scale must not be null.
   final double scale;
 
   /// The alignment of the origin of the coordinate system in which the scale
@@ -1552,7 +1409,7 @@ class _AnimatedScaleState extends ImplicitlyAnimatedWidgetState<AnimatedScale> {
 ///
 /// ```dart
 /// class LogoRotate extends StatefulWidget {
-///   const LogoRotate({Key? key}) : super(key: key);
+///   const LogoRotate({super.key});
 ///
 ///   @override
 ///   State<LogoRotate> createState() => LogoRotateState();
@@ -1571,8 +1428,8 @@ class _AnimatedScaleState extends ImplicitlyAnimatedWidgetState<AnimatedScale> {
 ///       mainAxisAlignment: MainAxisAlignment.center,
 ///       children: <Widget>[
 ///         ElevatedButton(
-///           child: const Text('Rotate Logo'),
 ///           onPressed: _changeRotation,
+///           child: const Text('Rotate Logo'),
 ///         ),
 ///         Padding(
 ///           padding: const EdgeInsets.all(50),
@@ -1596,20 +1453,16 @@ class _AnimatedScaleState extends ImplicitlyAnimatedWidgetState<AnimatedScale> {
 ///    an [Animation] is provided by the caller instead of being built in.
 class AnimatedRotation extends ImplicitlyAnimatedWidget {
   /// Creates a widget that animates its rotation implicitly.
-  ///
-  /// The [turns] argument must not be null.
-  /// The [curve] and [duration] arguments must not be null.
   const AnimatedRotation({
-    Key? key,
+    super.key,
     this.child,
     required this.turns,
     this.alignment = Alignment.center,
     this.filterQuality,
-    Curve curve = Curves.linear,
-    required Duration duration,
-    VoidCallback? onEnd,
-  }) : assert(turns != null),
-        super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+    super.curve,
+    required super.duration,
+    super.onEnd,
+  });
 
   /// The widget below this widget in the tree.
   ///
@@ -1671,6 +1524,80 @@ class _AnimatedRotationState extends ImplicitlyAnimatedWidgetState<AnimatedRotat
   }
 }
 
+/// Widget which automatically transitions the child's
+/// offset relative to its normal position whenever the given offset changes.
+///
+/// The translation is expressed as an [Offset] scaled to the child's size. For
+/// example, an [Offset] with a `dx` of 0.25 will result in a horizontal
+/// translation of one quarter the width of the child.
+///
+/// {@tool dartpad}
+/// This code defines a widget that uses [AnimatedSlide] to translate a [FlutterLogo]
+/// up or down and right or left by dragging the X and Y axis sliders.
+///
+/// ** See code in examples/api/lib/widgets/implicit_animations/animated_slide.0.dart **
+/// {@end-tool}
+///
+/// See also:
+///
+///  * [AnimatedPositioned], which, as a child of a [Stack], automatically
+///    transitions its child's position over a given duration whenever the given
+///    position changes.
+///  * [AnimatedAlign], which automatically transitions its child's
+///    position over a given duration whenever the given [AnimatedAlign.alignment] changes.
+class AnimatedSlide extends ImplicitlyAnimatedWidget {
+  /// Creates a widget that animates its offset translation implicitly.
+  const AnimatedSlide({
+    super.key,
+    this.child,
+    required this.offset,
+    super.curve,
+    required super.duration,
+    super.onEnd,
+  });
+
+  /// The widget below this widget in the tree.
+  ///
+  /// {@macro flutter.widgets.ProxyWidget.child}
+  final Widget? child;
+
+  /// The target offset.
+  /// The child will be translated horizontally by `width * dx` and vertically by `height * dy`
+  final Offset offset;
+
+  @override
+  ImplicitlyAnimatedWidgetState<AnimatedSlide> createState() => _AnimatedSlideState();
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties.add(DiagnosticsProperty<Offset>('offset', offset));
+  }
+}
+
+class _AnimatedSlideState extends ImplicitlyAnimatedWidgetState<AnimatedSlide> {
+  Tween<Offset>? _offset;
+  late Animation<Offset> _offsetAnimation;
+
+  @override
+  void forEachTween(TweenVisitor<dynamic> visitor) {
+    _offset = visitor(_offset, widget.offset, (dynamic value) => Tween<Offset>(begin: value as Offset)) as Tween<Offset>?;
+  }
+
+  @override
+  void didUpdateTweens() {
+    _offsetAnimation = animation.drive(_offset!);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideTransition(
+      position: _offsetAnimation,
+      child: widget.child,
+    );
+  }
+}
+
 /// Animated version of [Opacity] which automatically transitions the child's
 /// opacity over a given duration whenever the given opacity changes.
 ///
@@ -1687,7 +1614,7 @@ class _AnimatedRotationState extends ImplicitlyAnimatedWidgetState<AnimatedRotat
 ///
 /// ```dart
 /// class LogoFade extends StatefulWidget {
-///   const LogoFade({Key? key}) : super(key: key);
+///   const LogoFade({super.key});
 ///
 ///   @override
 ///   State<LogoFade> createState() => LogoFadeState();
@@ -1711,8 +1638,8 @@ class _AnimatedRotationState extends ImplicitlyAnimatedWidgetState<AnimatedRotat
 ///           child: const FlutterLogo(),
 ///         ),
 ///         ElevatedButton(
-///           child: const Text('Fade Logo'),
 ///           onPressed: _changeOpacity,
+///           child: const Text('Fade Logo'),
 ///         ),
 ///       ],
 ///     );
@@ -1721,29 +1648,45 @@ class _AnimatedRotationState extends ImplicitlyAnimatedWidgetState<AnimatedRotat
 /// ```
 /// {@end-tool}
 ///
+/// ## Hit testing
+///
+/// Setting the [opacity] to zero does not prevent hit testing from being
+/// applied to the descendants of the [AnimatedOpacity] widget. This can be
+/// confusing for the user, who may not see anything, and may believe the area
+/// of the interface where the [AnimatedOpacity] is hiding a widget to be
+/// non-interactive.
+///
+/// With certain widgets, such as [Flow], that compute their positions only when
+/// they are painted, this can actually lead to bugs (from unexpected geometry
+/// to exceptions), because those widgets are not painted by the [AnimatedOpacity]
+/// widget at all when the [opacity] animation reaches zero.
+///
+/// To avoid such problems, it is generally a good idea to use an
+/// [IgnorePointer] widget when setting the [opacity] to zero. This prevents
+/// interactions with any children in the subtree when the [child] is animating
+/// away.
+///
 /// See also:
 ///
 ///  * [AnimatedCrossFade], for fading between two children.
 ///  * [AnimatedSwitcher], for fading between many children in sequence.
 ///  * [FadeTransition], an explicitly animated version of this widget, where
 ///    an [Animation] is provided by the caller instead of being built in.
-///  * [SliverAnimatedOpacity], for automatically transitioning a sliver's
+///  * [SliverAnimatedOpacity], for automatically transitioning a _sliver's_
 ///    opacity over a given duration whenever the given opacity changes.
 class AnimatedOpacity extends ImplicitlyAnimatedWidget {
   /// Creates a widget that animates its opacity implicitly.
   ///
-  /// The [opacity] argument must not be null and must be between 0.0 and 1.0,
-  /// inclusive. The [curve] and [duration] arguments must not be null.
+  /// The [opacity] argument must be between zero and one, inclusive.
   const AnimatedOpacity({
-    Key? key,
+    super.key,
     this.child,
     required this.opacity,
-    Curve curve = Curves.linear,
-    required Duration duration,
-    VoidCallback? onEnd,
+    super.curve,
+    required super.duration,
+    super.onEnd,
     this.alwaysIncludeSemantics = false,
-  }) : assert(opacity != null && opacity >= 0.0 && opacity <= 1.0),
-       super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+  }) : assert(opacity >= 0.0 && opacity <= 1.0);
 
   /// The widget below this widget in the tree.
   ///
@@ -1754,8 +1697,6 @@ class AnimatedOpacity extends ImplicitlyAnimatedWidget {
   ///
   /// An opacity of 1.0 is fully opaque. An opacity of 0.0 is fully transparent
   /// (i.e., invisible).
-  ///
-  /// The opacity must not be null.
   final double opacity;
 
   /// Whether the semantic information of the children is always included.
@@ -1812,52 +1753,31 @@ class _AnimatedOpacityState extends ImplicitlyAnimatedWidgetState<AnimatedOpacit
 /// Here's an illustration of what using this widget looks like, using a [curve]
 /// of [Curves.fastOutSlowIn].
 ///
-/// {@tool dartpad --template=stateful_widget_scaffold_center_freeform_state}
+/// {@tool dartpad}
 /// Creates a [CustomScrollView] with a [SliverFixedExtentList] and a
 /// [FloatingActionButton]. Pressing the button animates the lists' opacity.
 ///
-/// ```dart
-/// class _MyStatefulWidgetState extends State<MyStatefulWidget> with SingleTickerProviderStateMixin {
-///   bool _visible = true;
-///
-///   @override
-///   Widget build(BuildContext context) {
-///     return CustomScrollView(
-///       slivers: <Widget>[
-///         SliverAnimatedOpacity(
-///           opacity: _visible ? 1.0 : 0.0,
-///           duration: const Duration(milliseconds: 500),
-///           sliver: SliverFixedExtentList(
-///             itemExtent: 100.0,
-///             delegate: SliverChildBuilderDelegate(
-///               (BuildContext context, int index) {
-///                 return Container(
-///                   color: index.isEven
-///                     ? Colors.indigo[200]
-///                     : Colors.orange[200],
-///                 );
-///               },
-///               childCount: 5,
-///             ),
-///           ),
-///         ),
-///         SliverToBoxAdapter(
-///           child: FloatingActionButton(
-///             onPressed: () {
-///               setState(() {
-///                 _visible = !_visible;
-///               });
-///             },
-///             tooltip: 'Toggle opacity',
-///             child: const Icon(Icons.flip),
-///           )
-///         ),
-///       ]
-///     );
-///   }
-/// }
-/// ```
+/// ** See code in examples/api/lib/widgets/implicit_animations/sliver_animated_opacity.0.dart **
 /// {@end-tool}
+///
+/// ## Hit testing
+///
+/// Setting the [opacity] to zero does not prevent hit testing from being
+/// applied to the descendants of the [SliverAnimatedOpacity] widget. This can
+/// be confusing for the user, who may not see anything, and may believe the
+/// area of the interface where the [SliverAnimatedOpacity] is hiding a widget
+/// to be non-interactive.
+///
+/// With certain widgets, such as [Flow], that compute their positions only when
+/// they are painted, this can actually lead to bugs (from unexpected geometry
+/// to exceptions), because those widgets are not painted by the
+/// [SliverAnimatedOpacity] widget at all when the [opacity] animation reaches
+/// zero.
+///
+/// To avoid such problems, it is generally a good idea to use a
+/// [SliverIgnorePointer] widget when setting the [opacity] to zero. This
+/// prevents interactions with any children in the subtree when the [sliver] is
+/// animating away.
 ///
 /// See also:
 ///
@@ -1868,18 +1788,16 @@ class _AnimatedOpacityState extends ImplicitlyAnimatedWidgetState<AnimatedOpacit
 class SliverAnimatedOpacity extends ImplicitlyAnimatedWidget {
   /// Creates a widget that animates its opacity implicitly.
   ///
-  /// The [opacity] argument must not be null and must be between 0.0 and 1.0,
-  /// inclusive. The [curve] and [duration] arguments must not be null.
+  /// The [opacity] argument must be between zero and one, inclusive.
   const SliverAnimatedOpacity({
-    Key? key,
+    super.key,
     this.sliver,
     required this.opacity,
-    Curve curve = Curves.linear,
-    required Duration duration,
-    VoidCallback? onEnd,
+    super.curve,
+    required super.duration,
+    super.onEnd,
     this.alwaysIncludeSemantics = false,
-  }) : assert(opacity != null && opacity >= 0.0 && opacity <= 1.0),
-      super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+  }) : assert(opacity >= 0.0 && opacity <= 1.0);
 
   /// The sliver below this widget in the tree.
   final Widget? sliver;
@@ -1888,8 +1806,6 @@ class SliverAnimatedOpacity extends ImplicitlyAnimatedWidget {
   ///
   /// An opacity of 1.0 is fully opaque. An opacity of 0.0 is fully transparent
   /// (i.e., invisible).
-  ///
-  /// The opacity must not be null.
   final double opacity;
 
   /// Whether the semantic information of the children is always included.
@@ -1958,11 +1874,8 @@ class _SliverAnimatedOpacityState extends ImplicitlyAnimatedWidgetState<SliverAn
 /// the lifecycle of the underlying [AnimationController].
 class AnimatedDefaultTextStyle extends ImplicitlyAnimatedWidget {
   /// Creates a widget that animates the default text style implicitly.
-  ///
-  /// The [child], [style], [softWrap], [overflow], [curve], and [duration]
-  /// arguments must not be null.
   const AnimatedDefaultTextStyle({
-    Key? key,
+    super.key,
     required this.child,
     required this.style,
     this.textAlign,
@@ -1971,16 +1884,10 @@ class AnimatedDefaultTextStyle extends ImplicitlyAnimatedWidget {
     this.maxLines,
     this.textWidthBasis = TextWidthBasis.parent,
     this.textHeightBehavior,
-    Curve curve = Curves.linear,
-    required Duration duration,
-    VoidCallback? onEnd,
-  }) : assert(style != null),
-       assert(child != null),
-       assert(softWrap != null),
-       assert(overflow != null),
-       assert(maxLines == null || maxLines > 0),
-       assert(textWidthBasis != null),
-       super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+    super.curve,
+    required super.duration,
+    super.onEnd,
+  }) : assert(maxLines == null || maxLines > 0);
 
   /// The widget below this widget in the tree.
   ///
@@ -1988,8 +1895,6 @@ class AnimatedDefaultTextStyle extends ImplicitlyAnimatedWidget {
   final Widget child;
 
   /// The target text style.
-  ///
-  /// The text style must not be null.
   ///
   /// When this property is changed, the style will be animated over [duration] time.
   final TextStyle style;
@@ -2023,7 +1928,7 @@ class AnimatedDefaultTextStyle extends ImplicitlyAnimatedWidget {
   /// See [TextWidthBasis] for possible values and their implications.
   final TextWidthBasis textWidthBasis;
 
-  /// {@macro flutter.dart:ui.textHeightBehavior}
+  /// {@macro dart.ui.textHeightBehavior}
   final ui.TextHeightBehavior? textHeightBehavior;
 
   @override
@@ -2082,15 +1987,13 @@ class _AnimatedDefaultTextStyleState extends AnimatedWidgetBaseState<AnimatedDef
 class AnimatedPhysicalModel extends ImplicitlyAnimatedWidget {
   /// Creates a widget that animates the properties of a [PhysicalModel].
   ///
-  /// The [child], [shape], [borderRadius], [elevation], [color], [shadowColor],
-  /// [curve], [clipBehavior], and [duration] arguments must not be null.
-  /// Additionally, [elevation] must be non-negative.
+  /// The [elevation] must be non-negative.
   ///
   /// Animating [color] is optional and is controlled by the [animateColor] flag.
   ///
   /// Animating [shadowColor] is optional and is controlled by the [animateShadowColor] flag.
   const AnimatedPhysicalModel({
-    Key? key,
+    super.key,
     required this.child,
     required this.shape,
     this.clipBehavior = Clip.none,
@@ -2100,19 +2003,10 @@ class AnimatedPhysicalModel extends ImplicitlyAnimatedWidget {
     this.animateColor = true,
     required this.shadowColor,
     this.animateShadowColor = true,
-    Curve curve = Curves.linear,
-    required Duration duration,
-    VoidCallback? onEnd,
-  }) : assert(child != null),
-       assert(shape != null),
-       assert(clipBehavior != null),
-       assert(borderRadius != null),
-       assert(elevation != null && elevation >= 0.0),
-       assert(color != null),
-       assert(shadowColor != null),
-       assert(animateColor != null),
-       assert(animateShadowColor != null),
-       super(key: key, curve: curve, duration: duration, onEnd: onEnd);
+    super.curve,
+    required super.duration,
+    super.onEnd,
+  }) : assert(elevation >= 0.0);
 
   /// The widget below this widget in the tree.
   ///
@@ -2193,5 +2087,110 @@ class _AnimatedPhysicalModelState extends AnimatedWidgetBaseState<AnimatedPhysic
           : widget.shadowColor,
       child: widget.child,
     );
+  }
+}
+
+/// Animated version of [FractionallySizedBox] which automatically transitions the
+/// child's size over a given duration whenever the given [widthFactor] or
+/// [heightFactor] changes, as well as the position whenever the given [alignment]
+/// changes.
+///
+/// For the animation, you can choose a [curve] as well as a [duration] and the
+/// widget will automatically animate to the new target [widthFactor] or
+/// [heightFactor].
+///
+/// {@tool dartpad}
+/// The following example transitions an [AnimatedFractionallySizedBox]
+/// between two states. It adjusts the [heightFactor], [widthFactor], and
+/// [alignment] properties when tapped, using a [curve] of [Curves.fastOutSlowIn]
+///
+/// ** See code in examples/api/lib/widgets/implicit_animations/animated_fractionally_sized_box.0.dart **
+/// {@end-tool}
+///
+/// See also:
+///
+///  * [AnimatedAlign], which is an implicitly animated version of [Align].
+///  * [AnimatedContainer], which can transition more values at once.
+///  * [AnimatedSlide], which can animate the translation of child by a given offset relative to its size.
+///  * [AnimatedPositioned], which, as a child of a [Stack], automatically
+///    transitions its child's position over a given duration whenever the given
+///    position changes.
+class AnimatedFractionallySizedBox extends ImplicitlyAnimatedWidget {
+  /// Creates a widget that sizes its child to a fraction of the total available
+  /// space that animates implicitly, and positions its child by an alignment
+  /// that animates implicitly.
+  ///
+  /// If non-null, the [widthFactor] and [heightFactor] arguments must be
+  /// non-negative.
+  const AnimatedFractionallySizedBox({
+    super.key,
+    this.alignment = Alignment.center,
+    this.child,
+    this.heightFactor,
+    this.widthFactor,
+    super.curve,
+    required super.duration,
+    super.onEnd,
+  }) : assert(widthFactor == null || widthFactor >= 0.0),
+       assert(heightFactor == null || heightFactor >= 0.0);
+
+  /// The widget below this widget in the tree.
+  ///
+  /// {@macro flutter.widgets.ProxyWidget.child}
+  final Widget? child;
+
+  /// {@macro flutter.widgets.basic.fractionallySizedBox.heightFactor}
+  final double? heightFactor;
+
+  /// {@macro flutter.widgets.basic.fractionallySizedBox.widthFactor}
+  final double? widthFactor;
+
+  /// {@macro flutter.widgets.basic.fractionallySizedBox.alignment}
+  final AlignmentGeometry alignment;
+
+  @override
+  AnimatedWidgetBaseState<AnimatedFractionallySizedBox> createState() => _AnimatedFractionallySizedBoxState();
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties.add(DiagnosticsProperty<AlignmentGeometry>('alignment', alignment));
+    properties.add(DiagnosticsProperty<double>('widthFactor', widthFactor));
+    properties.add(DiagnosticsProperty<double>('heightFactor', heightFactor));
+  }
+}
+
+class _AnimatedFractionallySizedBoxState extends AnimatedWidgetBaseState<AnimatedFractionallySizedBox> {
+  AlignmentGeometryTween? _alignment;
+  Tween<double>? _heightFactorTween;
+  Tween<double>? _widthFactorTween;
+
+  @override
+  void forEachTween(TweenVisitor<dynamic> visitor) {
+    _alignment = visitor(_alignment, widget.alignment, (dynamic value) => AlignmentGeometryTween(begin: value as AlignmentGeometry)) as AlignmentGeometryTween?;
+    if (widget.heightFactor != null) {
+      _heightFactorTween = visitor(_heightFactorTween, widget.heightFactor, (dynamic value) => Tween<double>(begin: value as double)) as Tween<double>?;
+    }
+    if (widget.widthFactor != null) {
+      _widthFactorTween = visitor(_widthFactorTween, widget.widthFactor, (dynamic value) => Tween<double>(begin: value as double)) as Tween<double>?;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FractionallySizedBox(
+      alignment: _alignment!.evaluate(animation)!,
+      heightFactor: _heightFactorTween?.evaluate(animation),
+      widthFactor: _widthFactorTween?.evaluate(animation),
+      child: widget.child,
+    );
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder description) {
+    super.debugFillProperties(description);
+    description.add(DiagnosticsProperty<AlignmentGeometryTween>('alignment', _alignment, defaultValue: null));
+    description.add(DiagnosticsProperty<Tween<double>>('widthFactor', _widthFactorTween, defaultValue: null));
+    description.add(DiagnosticsProperty<Tween<double>>('heightFactor', _heightFactorTween, defaultValue: null));
   }
 }

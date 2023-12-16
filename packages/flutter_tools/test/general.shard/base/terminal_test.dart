@@ -9,6 +9,7 @@ import 'package:flutter_tools/src/base/terminal.dart';
 import 'package:test/fake.dart';
 
 import '../../src/common.dart';
+import '../../src/fakes.dart';
 
 void main() {
   group('output preferences', () {
@@ -24,7 +25,7 @@ void main() {
 
     testWithoutContext('can turn off wrapping', () async {
       final BufferLogger bufferLogger = BufferLogger(
-        outputPreferences: OutputPreferences.test(wrapText: false),
+        outputPreferences: OutputPreferences.test(),
         terminal: TestTerminal(platform: FakePlatform()..stdoutSupportsAnsi = true),
       );
       final String testString = '0123456789' * 20;
@@ -34,7 +35,7 @@ void main() {
     });
   });
 
-  group('ANSI coloring and bold', () {
+  group('ANSI coloring, bold, and clearing', () {
     late AnsiTerminal terminal;
 
     setUp(() {
@@ -101,6 +102,39 @@ void main() {
       expect(
         terminal.bolden('bold ${terminal.bolden('output')} still bold'),
         equals('${AnsiTerminal.bold}bold output still bold${AnsiTerminal.resetBold}'),
+      );
+    });
+
+    testWithoutContext('clearing lines works', () {
+      expect(
+        terminal.clearLines(3),
+        equals(
+            '${AnsiTerminal.cursorBeginningOfLineCode}'
+            '${AnsiTerminal.clearEntireLineCode}'
+            '${AnsiTerminal.cursorUpLineCode}'
+            '${AnsiTerminal.clearEntireLineCode}'
+            '${AnsiTerminal.cursorUpLineCode}'
+            '${AnsiTerminal.clearEntireLineCode}'
+        ),
+      );
+
+      expect(
+        terminal.clearLines(1),
+        equals(
+            '${AnsiTerminal.cursorBeginningOfLineCode}'
+            '${AnsiTerminal.clearEntireLineCode}'
+        ),
+      );
+    });
+
+    testWithoutContext('clearing lines when color is not supported does not work', () {
+      terminal = AnsiTerminal(
+        stdio: Stdio(), // Danger, using real stdio.
+        platform: FakePlatform()..stdoutSupportsAnsi = false,
+      );
+      expect(
+        terminal.clearLines(3),
+        equals(''),
       );
     });
   });
@@ -184,7 +218,7 @@ void main() {
     final Stdio stdio = FakeStdio();
     expect(AnsiTerminal(stdio: stdio, platform: const LocalPlatform()).preferredStyle, 0); // Defaults to 0 for backwards compatibility.
 
-    expect(AnsiTerminal(stdio: stdio, platform: const LocalPlatform(), now: DateTime(2018, 1,  1)).preferredStyle, 0);
+    expect(AnsiTerminal(stdio: stdio, platform: const LocalPlatform(), now: DateTime(2018)).preferredStyle, 0);
     expect(AnsiTerminal(stdio: stdio, platform: const LocalPlatform(), now: DateTime(2018, 1,  2)).preferredStyle, 1);
     expect(AnsiTerminal(stdio: stdio, platform: const LocalPlatform(), now: DateTime(2018, 1,  3)).preferredStyle, 2);
     expect(AnsiTerminal(stdio: stdio, platform: const LocalPlatform(), now: DateTime(2018, 1,  4)).preferredStyle, 3);
@@ -220,6 +254,16 @@ void main() {
     expect(AnsiTerminal(stdio: stdio, platform: const LocalPlatform(), now: DateTime(2018, 1, 10, 23)).preferredStyle, 2);
     expect(AnsiTerminal(stdio: stdio, platform: const LocalPlatform(), now: DateTime(2018, 1, 11, 23)).preferredStyle, 3);
   });
+
+  testWithoutContext('set singleCharMode resilient to StdinException', () async {
+    final FakeStdio stdio = FakeStdio();
+    final AnsiTerminal terminal = AnsiTerminal(stdio: stdio, platform: const LocalPlatform());
+    stdio.stdinHasTerminal = true;
+    stdio._stdin = FakeStdin()..echoModeCallback = (bool _) => throw const StdinException(
+      'Error setting terminal echo mode, OS Error: The handle is invalid.',
+    );
+    terminal.singleCharMode = true;
+  });
 }
 
 late Stream<String> mockStdInStream;
@@ -227,22 +271,45 @@ late Stream<String> mockStdInStream;
 class TestTerminal extends AnsiTerminal {
   TestTerminal({
     Stdio? stdio,
-    Platform platform = const LocalPlatform(),
+    super.platform = const LocalPlatform(),
     DateTime? now,
-  }) : super(stdio: stdio ?? Stdio(), platform: platform, now: now ?? DateTime(2018));
+  }) : super(stdio: stdio ?? Stdio(), now: now ?? DateTime(2018));
 
   @override
   Stream<String> get keystrokes {
     return mockStdInStream;
   }
 
-  bool singleCharMode = false;
+  bool _singleCharMode = false;
+
+  @override
+  bool get singleCharMode => _singleCharMode;
+
+  void Function(bool newMode)? _singleCharModeCallback;
+
+  @override
+  set singleCharMode(bool newMode) {
+    _singleCharMode = newMode;
+    if (_singleCharModeCallback != null) {
+      _singleCharModeCallback!(newMode);
+    }
+  }
 
   @override
   int get preferredStyle => 0;
 }
 
 class FakeStdio extends Fake implements Stdio {
+  Stream<List<int>>? _stdin;
+
+  @override
+  Stream<List<int>> get stdin {
+    if (_stdin != null) {
+      return _stdin!;
+    }
+    throw UnimplementedError('stdin');
+  }
+
   @override
   bool stdinHasTerminal = false;
 }

@@ -9,7 +9,7 @@ import 'base/config.dart';
 import 'base/file_system.dart';
 import 'build_info.dart';
 import 'convert.dart';
-import 'globals_null_migrated.dart' as globals;
+import 'globals.dart' as globals;
 
 String get defaultMainPath => globals.fs.path.join('lib', 'main.dart');
 const String defaultManifestPath = 'pubspec.yaml';
@@ -33,7 +33,7 @@ String getDefaultCachedKernelPath({
 }) {
   final StringBuffer buffer = StringBuffer();
    final List<String> cacheFrontEndOptions = extraFrontEndOptions.toList()
-     ..removeWhere((String arg) => arg.startsWith('--enable-experiment=') || arg == '--flutter-widget-cache');
+     ..removeWhere((String arg) => arg.startsWith('--enable-experiment='));
   buffer.writeAll(dartDefines);
   buffer.writeAll(cacheFrontEndOptions);
   String buildPrefix = '';

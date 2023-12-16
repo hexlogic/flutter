@@ -42,7 +42,7 @@ void main() {
     await benchmarkWidgets(
       (WidgetTester tester) async {
         const Key root = Key('root');
-        binding.attachRootWidget(Container(key: root));
+        binding.attachRootWidget(binding.wrapWithDefaultView(Container(key: root)));
         await tester.pump();
 
         expect(binding.framesBegun, greaterThan(0));
@@ -70,5 +70,5 @@ void main() {
       // testing the behavior. So it's OK that asserts are enabled.
       mayRunWithAsserts: true,
     );
-  }, skip: isBrowser);
+  }, skip: isBrowser); // https://github.com/flutter/flutter/issues/87871
 }

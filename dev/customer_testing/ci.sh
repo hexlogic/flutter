@@ -8,15 +8,15 @@
 # This is called from .cirrus.yml and the LUCI recipes:
 # https://flutter.googlesource.com/recipes/+/refs/heads/master/recipe_modules/adhoc_validation/resources/customer_testing.sh
 
-set -e
+set -ex
 
 # This script does not assume that "flutter update-packages" has been
 # run, to allow CIs to save time by skipping that steps since it's
 # largely not needed to run the flutter/tests tests.
 #
 # However, we do need to update this directory and the tools directory.
-pub get
-(cd ../tools; pub get) # used for find_commit.dart below
+dart pub get
+(cd ../tools; dart pub get) # used for find_commit.dart below
 
 # Next we need to update the flutter/tests checkout.
 #
@@ -31,7 +31,7 @@ pub get
 # shard, it should still pass, even if we rolled one of the tests.)
 rm -rf ../../bin/cache/pkg/tests
 git clone https://github.com/flutter/tests.git ../../bin/cache/pkg/tests
-git -C ../../bin/cache/pkg/tests checkout `dart --enable-asserts ../tools/bin/find_commit.dart ../../bin/cache/pkg/tests`
+git -C ../../bin/cache/pkg/tests checkout `dart --enable-asserts ../tools/bin/find_commit.dart . master ../../bin/cache/pkg/tests main`
 
 # Finally, run the tests.
-dart --enable-asserts run_tests.dart --skip-on-fetch-failure --skip-template ../../bin/cache/pkg/tests/registry/*.test
+dart --enable-asserts run_tests.dart --verbose --skip-on-fetch-failure --skip-template ../../bin/cache/pkg/tests/registry/*.test

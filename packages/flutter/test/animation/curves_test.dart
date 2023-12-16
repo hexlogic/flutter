@@ -37,7 +37,7 @@ void main() {
     const double delta = 0.005;
     for (double x = 0.0; x < 1.0 - delta; x += delta) {
       final double deltaY = curve.transform(x) - curve.transform(x + delta);
-      assert(deltaY.abs() < delta * maximumSlope, '${curve.toString()} discontinuous at $x');
+      assert(deltaY.abs() < delta * maximumSlope, '$curve discontinuous at $x');
     }
   }
 
@@ -270,7 +270,6 @@ void main() {
         Offset(0.66, 0.75),
         Offset(1.0, 1.0),
       ],
-      tension: 0.0,
       startHandle: const Offset(0.0, -0.3),
       endHandle: const Offset(1.3, 1.3),
     );
@@ -306,6 +305,28 @@ void main() {
     expect(() {
       CatmullRomSpline(const <Offset>[Offset.zero, Offset.zero, Offset.zero, Offset.zero], tension: 2.0);
     }, throwsAssertionError);
+    expect(() {
+      CatmullRomSpline(
+        const <Offset>[Offset(double.infinity, 0.0), Offset.zero, Offset.zero, Offset.zero],
+      ).generateSamples();
+    }, throwsAssertionError);
+    expect(() {
+      CatmullRomSpline(
+        const <Offset>[Offset(0.0, double.infinity), Offset.zero, Offset.zero, Offset.zero],
+      ).generateSamples();
+    }, throwsAssertionError);
+    expect(() {
+      CatmullRomSpline(
+        startHandle: const Offset(0.0, double.infinity),
+        const <Offset>[Offset.zero, Offset.zero, Offset.zero, Offset.zero],
+      ).generateSamples();
+    }, throwsAssertionError);
+    expect(() {
+      CatmullRomSpline(
+        endHandle: const Offset(0.0, double.infinity),
+        const <Offset>[Offset.zero, Offset.zero, Offset.zero, Offset.zero],
+      ).generateSamples();
+    }, throwsAssertionError);
   });
 
   test('CatmullRomSpline interpolates values properly when precomputed', () {
@@ -319,7 +340,6 @@ void main() {
         Offset(0.66, 0.75),
         Offset(1.0, 1.0),
       ],
-      tension: 0.0,
       startHandle: const Offset(0.0, -0.3),
       endHandle: const Offset(1.3, 1.3),
     );
@@ -354,6 +374,24 @@ void main() {
     }, throwsAssertionError);
     expect(() {
       CatmullRomSpline.precompute(const <Offset>[Offset.zero, Offset.zero, Offset.zero, Offset.zero], tension: 2.0);
+    }, throwsAssertionError);
+    expect(() {
+      CatmullRomSpline.precompute(const <Offset>[Offset(double.infinity, 0.0), Offset.zero, Offset.zero, Offset.zero]);
+    }, throwsAssertionError);
+    expect(() {
+      CatmullRomSpline.precompute(const <Offset>[Offset(0.0, double.infinity), Offset.zero, Offset.zero, Offset.zero]);
+    }, throwsAssertionError);
+    expect(() {
+      CatmullRomSpline.precompute(
+        startHandle: const Offset(0.0, double.infinity),
+        const <Offset>[Offset.zero, Offset.zero, Offset.zero, Offset.zero],
+      );
+    }, throwsAssertionError);
+    expect(() {
+      CatmullRomSpline.precompute(
+        endHandle: const Offset(0.0, double.infinity),
+        const <Offset>[Offset.zero, Offset.zero, Offset.zero, Offset.zero],
+      );
     }, throwsAssertionError);
   });
 
@@ -419,7 +457,6 @@ void main() {
           Offset(0.2, 0.25),
           Offset(0.01, 0.25),
         ],
-        tension: 0.0,
       ),
       isFalse,
     );
@@ -429,7 +466,6 @@ void main() {
           Offset(0.2, 0.25),
           Offset(0.01, 0.25),
         ],
-        tension: 0.0,
       );
     }, throwsAssertionError);
 
@@ -440,7 +476,6 @@ void main() {
           Offset(0.2, 0.25),
           Offset(1.01, 0.25),
         ],
-        tension: 0.0,
       ),
       isFalse,
     );
@@ -450,7 +485,6 @@ void main() {
           Offset(0.2, 0.25),
           Offset(1.01, 0.25),
         ],
-        tension: 0.0,
       );
     }, throwsAssertionError);
 
@@ -462,7 +496,6 @@ void main() {
           Offset(0.50, 0.50),
           Offset(0.75, 0.75),
         ],
-        tension: 0.0,
       ),
       isFalse,
     );
@@ -473,7 +506,6 @@ void main() {
           Offset(0.50, 0.50),
           Offset(0.75, 0.75),
         ],
-        tension: 0.0,
       );
     }, throwsAssertionError);
 
@@ -485,7 +517,6 @@ void main() {
           Offset(0.50, 0.50),
           Offset(0.95, 0.51),
         ],
-        tension: 0.0,
       ),
       isFalse,
     );
@@ -496,7 +527,6 @@ void main() {
           Offset(0.50, 0.50),
           Offset(0.95, 0.51),
         ],
-        tension: 0.0,
       );
     }, throwsAssertionError);
 
@@ -507,7 +537,6 @@ void main() {
           Offset(0.5, 0.05),
           Offset(0.5, 0.95),
         ],
-        tension: 0.0,
       ),
       isFalse,
     );
@@ -517,7 +546,6 @@ void main() {
           Offset(0.5, 0.05),
           Offset(0.5, 0.95),
         ],
-        tension: 0.0,
       );
     }, throwsAssertionError);
   });
@@ -540,7 +568,6 @@ void main() {
           Offset(0.2, 0.25),
           Offset(0.01, 0.25),
         ],
-        tension: 0.0,
       );
     }, throwsAssertionError);
 
@@ -551,7 +578,6 @@ void main() {
           Offset(0.2, 0.25),
           Offset(1.01, 0.25),
         ],
-        tension: 0.0,
       );
     }, throwsAssertionError);
 
@@ -563,7 +589,6 @@ void main() {
           Offset(0.50, 0.50),
           Offset(0.75, 0.75),
         ],
-        tension: 0.0,
       );
     }, throwsAssertionError);
 
@@ -575,7 +600,6 @@ void main() {
           Offset(0.50, 0.50),
           Offset(0.95, 0.51),
         ],
-        tension: 0.0,
       );
     }, throwsAssertionError);
 
@@ -586,7 +610,6 @@ void main() {
           Offset(0.5, 0.05),
           Offset(0.5, 0.95),
         ],
-        tension: 0.0,
       );
     }, throwsAssertionError);
   });

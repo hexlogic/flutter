@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   setUp(() {
     WidgetsFlutterBinding.ensureInitialized();
-    WidgetsBinding.instance!.resetEpoch();
+    WidgetsBinding.instance.resetEpoch();
   });
 
   test('AnimationController with mutating listener', () {
@@ -84,6 +84,7 @@ void main() {
       duration: const Duration(milliseconds: 100),
       vsync: const TestVSync(),
     );
+    addTearDown(controller.dispose);
     final List<String> log = <String>[];
 
     void listener1() { log.add('listener1'); }

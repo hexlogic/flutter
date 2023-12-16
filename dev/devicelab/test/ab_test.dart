@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// @dart = 2.8
-
 import 'package:flutter_devicelab/framework/ab.dart';
 import 'package:flutter_devicelab/framework/task_result.dart';
 
@@ -11,7 +9,7 @@ import 'common.dart';
 
 void main() {
   test('ABTest', () {
-    final ABTest ab = ABTest('engine', 'test');
+    final ABTest ab = ABTest(localEngine: 'engine', localEngineHost: 'engine', taskName: 'test');
 
     for (int i = 0; i < 5; i++) {
       final TaskResult aResult = TaskResult.fromJson(<String, dynamic>{

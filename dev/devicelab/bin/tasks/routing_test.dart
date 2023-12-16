@@ -2,13 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// @dart = 2.8
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_devicelab/common.dart';
 import 'package:flutter_devicelab/framework/devices.dart';
 import 'package:flutter_devicelab/framework/framework.dart';
 import 'package:flutter_devicelab/framework/task_result.dart';
@@ -17,7 +14,7 @@ import 'package:path/path.dart' as path;
 
 void main() {
   task(() async {
-    int vmServicePort;
+    int? vmServicePort;
 
     final Device device = await devices.workingDevice;
     await device.unlock();
@@ -34,18 +31,17 @@ void main() {
           '/smuggle-it',
           'lib/route.dart',
         ],
-        canFail: false,
       );
     });
     section('TEST WHETHER `flutter run --route` WORKS');
     await inDirectory(appDir, () async {
       final Completer<void> ready = Completer<void>();
-      bool ok;
+      late bool ok;
       print('run: starting...');
-      final Process run = await startProcess(
-        path.join(flutterDirectory.path, 'bin', 'flutter'),
+      final Process run = await startFlutter(
+        'run',
         // --fast-start does not support routes.
-        <String>['run', '--verbose', '--disable-service-auth-codes', '--no-fast-start', '--no-publish-port', '-d', device.deviceId, '--route', '/smuggle-it', 'lib/route.dart'],
+        options: <String>['--verbose', '--disable-service-auth-codes', '--no-fast-start', '--no-publish-port', '-d', device.deviceId, '--route', '/smuggle-it', 'lib/route.dart'],
       );
       run.stdout
         .transform<String>(utf8.decoder)
@@ -58,7 +54,7 @@ void main() {
               print('service protocol connection available at port $vmServicePort');
               print('run: ready!');
               ready.complete();
-              ok ??= true;
+              ok = true;
             }
           }
         });
@@ -70,12 +66,13 @@ void main() {
         });
       unawaited(run.exitCode.then<void>((int exitCode) { ok = false; }));
       await Future.any<dynamic>(<Future<dynamic>>[ ready.future, run.exitCode ]);
-      if (!ok)
+      if (!ok) {
         throw 'Failed to run test app.';
+      }
       print('drive: starting...');
-      final Process drive = await startProcess(
-        path.join(flutterDirectory.path, 'bin', 'flutter'),
-        <String>['drive', '--use-existing-app', 'http://127.0.0.1:$vmServicePort/', '--no-keep-app-running', 'lib/route.dart'],
+      final Process drive = await startFlutter(
+        'drive',
+        options: <String>['--use-existing-app', 'http://127.0.0.1:$vmServicePort/', '--no-keep-app-running', 'lib/route.dart'],
       );
       drive.stdout
         .transform<String>(utf8.decoder)
@@ -94,11 +91,13 @@ void main() {
       await flutter('install', options: <String>[
         '--uninstall-only',
       ]);
-      if (result != 0)
+      if (result != 0) {
         throw 'Failed to drive test app (exit code $result).';
+      }
       result = await run.exitCode;
-      if (result != 0)
+      if (result != 0) {
         throw 'Received unexpected exit code $result from run process.';
+      }
     });
     return TaskResult.success(null);
   });

@@ -6,8 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../rendering/mock_canvas.dart';
-
 void main() {
   testWidgets('Passes textAlign to underlying CupertinoTextField', (WidgetTester tester) async {
     const TextAlign alignment = TextAlign.center;
@@ -136,14 +134,14 @@ void main() {
   });
 
   testWidgets('onFieldSubmit callbacks are called', (WidgetTester tester) async {
-    bool _called = false;
+    bool called = false;
 
     await tester.pumpWidget(
       CupertinoApp(
         home: Center(
           child: CupertinoTextFormFieldRow(
             onFieldSubmitted: (String value) {
-              _called = true;
+              called = true;
             },
           ),
         ),
@@ -153,18 +151,18 @@ void main() {
     await tester.showKeyboard(find.byType(CupertinoTextField));
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
-    expect(_called, true);
+    expect(called, true);
   });
 
   testWidgets('onChanged callbacks are called', (WidgetTester tester) async {
-    late String _value;
+    late String value;
 
     await tester.pumpWidget(
       CupertinoApp(
         home: Center(
           child: CupertinoTextFormFieldRow(
-            onChanged: (String value) {
-              _value = value;
+            onChanged: (String v) {
+              value = v;
             },
           ),
         ),
@@ -173,11 +171,11 @@ void main() {
 
     await tester.enterText(find.byType(CupertinoTextField), 'Soup');
     await tester.pump();
-    expect(_value, 'Soup');
+    expect(value, 'Soup');
   });
 
   testWidgets('autovalidateMode is passed to super', (WidgetTester tester) async {
-    int _validateCalled = 0;
+    int validateCalled = 0;
 
     await tester.pumpWidget(
       CupertinoApp(
@@ -185,7 +183,7 @@ void main() {
           child: CupertinoTextFormFieldRow(
             autovalidateMode: AutovalidateMode.always,
             validator: (String? value) {
-              _validateCalled++;
+              validateCalled++;
               return null;
             },
           ),
@@ -193,14 +191,14 @@ void main() {
       ),
     );
 
-    expect(_validateCalled, 1);
+    expect(validateCalled, 1);
     await tester.enterText(find.byType(CupertinoTextField), 'a');
     await tester.pump();
-    expect(_validateCalled, 2);
+    expect(validateCalled, 2);
   });
 
   testWidgets('validate is called if widget is enabled', (WidgetTester tester) async {
-    int _validateCalled = 0;
+    int validateCalled = 0;
 
     await tester.pumpWidget(
       CupertinoApp(
@@ -209,7 +207,7 @@ void main() {
             enabled: true,
             autovalidateMode: AutovalidateMode.always,
             validator: (String? value) {
-              _validateCalled += 1;
+              validateCalled += 1;
               return null;
             },
           ),
@@ -217,10 +215,10 @@ void main() {
       ),
     );
 
-    expect(_validateCalled, 1);
+    expect(validateCalled, 1);
     await tester.enterText(find.byType(CupertinoTextField), 'a');
     await tester.pump();
-    expect(_validateCalled, 2);
+    expect(validateCalled, 2);
   });
 
   testWidgets('readonly text form field will hide cursor by default', (WidgetTester tester) async {
@@ -262,7 +260,7 @@ void main() {
 
     await tester.pump(const Duration(milliseconds: 200));
     expect(renderEditable, paintsExactlyCountTimes(#drawRect, 0));
-  }, skip: isBrowser); // We do not use Flutter-rendered context menu on the Web
+  }, skip: isBrowser); // [intended] We do not use Flutter-rendered context menu on the Web.
 
   testWidgets('onTap is called upon tap', (WidgetTester tester) async {
     int tapCount = 0;
@@ -329,7 +327,7 @@ void main() {
   });
 
   testWidgets('onChanged callbacks value and FormFieldState.value are sync', (WidgetTester tester) async {
-    bool _called = false;
+    bool called = false;
 
     late FormFieldState<String> state;
 
@@ -338,7 +336,7 @@ void main() {
         home: Center(
           child: CupertinoTextFormFieldRow(
             onChanged: (String value) {
-              _called = true;
+              called = true;
               expect(value, state.value);
             },
           ),
@@ -351,7 +349,7 @@ void main() {
 
     await tester.enterText(find.byType(CupertinoTextField), 'Soup');
 
-    expect(_called, true);
+    expect(called, true);
   });
 
   testWidgets('autofillHints is passed to super', (WidgetTester tester) async {
@@ -371,7 +369,7 @@ void main() {
   });
 
   testWidgets('autovalidateMode is passed to super', (WidgetTester tester) async {
-    int _validateCalled = 0;
+    int validateCalled = 0;
 
     await tester.pumpWidget(
       CupertinoApp(
@@ -379,7 +377,7 @@ void main() {
           child: CupertinoTextFormFieldRow(
             autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (String? value) {
-              _validateCalled++;
+              validateCalled++;
               return null;
             },
           ),
@@ -387,10 +385,10 @@ void main() {
       ),
     );
 
-    expect(_validateCalled, 0);
+    expect(validateCalled, 0);
     await tester.enterText(find.byType(CupertinoTextField), 'a');
     await tester.pump();
-    expect(_validateCalled, 1);
+    expect(validateCalled, 1);
   });
 
   testWidgets('AutovalidateMode.always mode shows error from the start', (WidgetTester tester) async {
@@ -415,7 +413,7 @@ void main() {
 
   testWidgets('Shows error text upon invalid input', (WidgetTester tester) async {
     final TextEditingController controller = TextEditingController(text: '');
-
+    addTearDown(controller.dispose);
     await tester.pumpWidget(
       CupertinoApp(
         home: Center(
@@ -457,5 +455,79 @@ void main() {
 
     final Text errorText = tester.widget(errorTextFinder);
     expect(errorText.data, 'Enter Value');
+  });
+
+  testWidgets('Passes textDirection to underlying CupertinoTextField', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      CupertinoApp(
+        home: Center(
+          child: CupertinoTextFormFieldRow(
+            textDirection: TextDirection.ltr,
+          ),
+        ),
+      ),
+    );
+
+    final Finder ltrTextFieldFinder = find.byType(CupertinoTextField);
+    expect(ltrTextFieldFinder, findsOneWidget);
+
+    final CupertinoTextField ltrTextFieldWidget = tester.widget(ltrTextFieldFinder);
+    expect(ltrTextFieldWidget.textDirection, TextDirection.ltr);
+
+    await tester.pumpWidget(
+      CupertinoApp(
+        home: Center(
+          child: CupertinoTextFormFieldRow(
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+      ),
+    );
+
+    final Finder rtlTextFieldFinder = find.byType(CupertinoTextField);
+    expect(rtlTextFieldFinder, findsOneWidget);
+
+    final CupertinoTextField rtlTextFieldWidget = tester.widget(rtlTextFieldFinder);
+    expect(rtlTextFieldWidget.textDirection, TextDirection.rtl);
+  });
+
+  testWidgets(
+      'CupertinoTextFormFieldRow onChanged is called when the form is reset', (WidgetTester tester) async {
+    // Regression test for https://github.com/flutter/flutter/issues/123009.
+    final GlobalKey<FormFieldState<String>> stateKey = GlobalKey<FormFieldState<String>>();
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+    String value = 'initialValue';
+
+    await tester.pumpWidget(
+      CupertinoApp(
+        home: Center(
+          child: Form(
+            key: formKey,
+            child: CupertinoTextFormFieldRow(
+              key: stateKey,
+              initialValue: value,
+              onChanged: (String newValue) {
+                value = newValue;
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Initial value is 'initialValue'.
+    expect(stateKey.currentState!.value, 'initialValue');
+    expect(value, 'initialValue');
+
+    // Change value to 'changedValue'.
+    await tester.enterText(find.byType(CupertinoTextField), 'changedValue');
+    expect(stateKey.currentState!.value,'changedValue');
+    expect(value, 'changedValue');
+
+    // Should be back to 'initialValue' when the form is reset.
+    formKey.currentState!.reset();
+    await tester.pump();
+    expect(stateKey.currentState!.value,'initialValue');
+    expect(value, 'initialValue');
   });
 }

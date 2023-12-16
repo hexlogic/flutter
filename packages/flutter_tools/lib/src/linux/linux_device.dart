@@ -2,9 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// @dart = 2.8
-
-import 'package:meta/meta.dart';
 import 'package:process/process.dart';
 
 import '../base/file_system.dart';
@@ -23,11 +20,12 @@ import 'linux_workflow.dart';
 /// A device that represents a desktop Linux target.
 class LinuxDevice extends DesktopDevice {
   LinuxDevice({
-    @required ProcessManager processManager,
-    @required Logger logger,
-    @required FileSystem fileSystem,
-    @required OperatingSystemUtils operatingSystemUtils,
+    required ProcessManager processManager,
+    required Logger logger,
+    required FileSystem fileSystem,
+    required OperatingSystemUtils operatingSystemUtils,
   })  : _operatingSystemUtils = operatingSystemUtils,
+        _logger = logger,
         super(
           'linux',
           platformType: PlatformType.linux,
@@ -39,8 +37,7 @@ class LinuxDevice extends DesktopDevice {
         );
 
   final OperatingSystemUtils _operatingSystemUtils;
-
-  TargetPlatform _targetPlatform;
+  final Logger _logger;
 
   @override
   bool isSupported() => true;
@@ -49,17 +46,12 @@ class LinuxDevice extends DesktopDevice {
   String get name => 'Linux';
 
   @override
-  Future<TargetPlatform> get targetPlatform async {
-    if (_targetPlatform == null) {
-      if (_operatingSystemUtils.hostPlatform == HostPlatform.linux_x64) {
-        _targetPlatform = TargetPlatform.linux_x64;
-      } else {
-        _targetPlatform = TargetPlatform.linux_arm64;
-      }
+  late final Future<TargetPlatform> targetPlatform = () async {
+    if (_operatingSystemUtils.hostPlatform == HostPlatform.linux_x64) {
+      return TargetPlatform.linux_x64;
     }
-
-    return _targetPlatform;
-  }
+    return TargetPlatform.linux_arm64;
+  }();
 
   @override
   bool isSupportedForProject(FlutterProject flutterProject) {
@@ -67,33 +59,33 @@ class LinuxDevice extends DesktopDevice {
   }
 
   @override
-  Future<void> buildForDevice(
-    covariant LinuxApp package, {
-    String mainPath,
-    BuildInfo buildInfo,
+  Future<void> buildForDevice({
+    String? mainPath,
+    required BuildInfo buildInfo,
   }) async {
     await buildLinux(
       FlutterProject.current().linux,
       buildInfo,
       target: mainPath,
-      targetPlatform: _targetPlatform,
+      targetPlatform: await targetPlatform,
+      logger: _logger,
     );
   }
 
   @override
-  String executablePathForDevice(covariant LinuxApp package, BuildMode buildMode) {
-    return package.executable(buildMode);
+  String executablePathForDevice(covariant LinuxApp package, BuildInfo buildInfo) {
+    return package.executable(buildInfo.mode);
   }
 }
 
 class LinuxDevices extends PollingDeviceDiscovery {
   LinuxDevices({
-    @required Platform platform,
-    @required FeatureFlags featureFlags,
-    @required OperatingSystemUtils operatingSystemUtils,
-    @required FileSystem fileSystem,
-    @required ProcessManager processManager,
-    @required Logger logger,
+    required Platform platform,
+    required FeatureFlags featureFlags,
+    required OperatingSystemUtils operatingSystemUtils,
+    required FileSystem fileSystem,
+    required ProcessManager processManager,
+    required Logger logger,
   }) : _platform = platform,
        _linuxWorkflow = LinuxWorkflow(
           platform: platform,
@@ -119,7 +111,7 @@ class LinuxDevices extends PollingDeviceDiscovery {
   bool get canListAnything => _linuxWorkflow.canListDevices;
 
   @override
-  Future<List<Device>> pollingGetDevices({ Duration timeout }) async {
+  Future<List<Device>> pollingGetDevices({ Duration? timeout }) async {
     if (!canListAnything) {
       return const <Device>[];
     }

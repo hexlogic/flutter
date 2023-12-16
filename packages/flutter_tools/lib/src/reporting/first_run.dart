@@ -25,8 +25,7 @@ const String _kFlutterFirstRunMessage = '''
   ║ Flutter tool.                                                              ║
   ║                                                                            ║
   ║ By downloading the Flutter SDK, you agree to the Google Terms of Service.  ║
-  ║ Note: The Google Privacy Policy describes how data is handled in this      ║
-  ║ service.                                                                   ║
+  ║ The Google Privacy Policy describes how data is handled in this service.   ║
   ║                                                                            ║
   ║ Moreover, Flutter includes the Dart SDK, which may send usage metrics and  ║
   ║ crash reports to Google.                                                   ║
@@ -36,6 +35,9 @@ const String _kFlutterFirstRunMessage = '''
   ║                                                                            ║
   ║ See Google's privacy policy:                                               ║
   ║ https://policies.google.com/privacy                                        ║
+  ║                                                                            ║
+  ║ To disable animations in this tool, use                                    ║
+  ║ 'flutter config --no-cli-animations'.                                      ║
   ╚════════════════════════════════════════════════════════════════════════════╝
 ''';
 
@@ -67,7 +69,7 @@ class FirstRunMessenger {
 
   /// Update the cached license terms hash once the new terms have been displayed.
   void confirmLicenseTermsDisplayed() {
-    _persistentToolState.lastActiveLicenseTerms = _currentHash;
+    _persistentToolState.setLastActiveLicenseTermsHash(_currentHash);
   }
 
   /// The hash of the current license representation.

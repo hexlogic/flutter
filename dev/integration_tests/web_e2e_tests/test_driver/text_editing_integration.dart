@@ -9,19 +9,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:web_e2e_tests/common.dart';
 import 'package:web_e2e_tests/text_editing_main.dart' as app;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-
-  /// Locate elements in the correct root of the application, whether it is
-  /// `document` or the new `shadowRoot` of `flt-class-pane`.
-  List<Node> findElements(String selector) {
-    final ShadowRoot? shadowRoot = document.querySelector('flt-glass-pane')?.shadowRoot;
-    return (shadowRoot != null) ?
-      shadowRoot.querySelectorAll(selector):
-      document.querySelectorAll(selector);
-  }
 
   testWidgets('Focused text field creates a native input element',
       (WidgetTester tester) async {
@@ -88,9 +80,14 @@ void main() {
     expect(textFormFieldsFinder, findsOneWidget);
     await tester.tap(find.byKey(const Key('input2')));
 
-    // // Press Tab. This should trigger `onFieldSubmitted` of TextField.
+    // Press Tab. This should trigger `onFieldSubmitted` of TextField.
     final InputElement input = findElements('input')[0] as InputElement;
     dispatchKeyboardEvent(input, 'keydown', <String, dynamic>{
+      'keyCode': 13, // Enter.
+      'cancelable': true,
+    });
+    // Release Tab.
+    dispatchKeyboardEvent(input, 'keyup', <String, dynamic>{
       'keyCode': 13, // Enter.
       'cancelable': true,
     });
@@ -120,6 +117,14 @@ void main() {
 
     // Press Tab. The focus should move to the next TextFormField.
     dispatchKeyboardEvent(input, 'keydown', <String, dynamic>{
+      'key': 'Tab',
+      'code': 'Tab',
+      'bubbles': true,
+      'cancelable': true,
+      'composed': true,
+    });
+    // Release tab.
+    dispatchKeyboardEvent(input, 'keyup', <String, dynamic>{
       'key': 'Tab',
       'code': 'Tab',
       'bubbles': true,
@@ -173,6 +178,14 @@ void main() {
       'cancelable': true,
       'composed': true,
     });
+    // Release Tab.
+    dispatchKeyboardEvent(input, 'keyup', <String, dynamic>{
+      'key': 'Tab',
+      'code': 'Tab',
+      'bubbles': true,
+      'cancelable': true,
+      'composed': true,
+    });
 
     await tester.pumpAndSettle();
 
@@ -198,7 +211,6 @@ void main() {
     // Drag by mouse to select the entire selectable text.
     TestGesture gesture =
         await tester.startGesture(topLeft, kind: PointerDeviceKind.mouse);
-    addTearDown(gesture.removePointer);
     await gesture.moveTo(topRight);
     await gesture.up();
 
@@ -221,7 +233,6 @@ void main() {
       firstWordOffset,
       kind: PointerDeviceKind.mouse,
     );
-    addTearDown(gesture.removePointer);
     await gesture.up();
     await gesture.down(firstWordOffset);
     await gesture.up();
@@ -234,7 +245,6 @@ void main() {
       lastWordOffset,
       kind: PointerDeviceKind.mouse,
     );
-    addTearDown(gesture.removePointer);
     await gesture.up();
     await gesture.down(lastWordOffset);
     await gesture.up();
@@ -250,7 +260,6 @@ KeyboardEvent dispatchKeyboardEvent(
     type,
     args,
   ];
-
   final KeyboardEvent event = js_util.callConstructor(
           jsKeyboardEvent, js_util.jsify(eventArgs) as List<dynamic>)
       as KeyboardEvent;

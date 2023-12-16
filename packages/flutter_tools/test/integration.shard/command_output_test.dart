@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// @dart = 2.8
-
 import 'dart:convert';
 
 import 'package:flutter_tools/src/base/file_system.dart';
@@ -70,19 +68,20 @@ void main() {
     ]);
 
     // Check for message only printed in verbose mode.
-    expect(result.stdout, contains('Running shutdown hooks'));
+    expect(result.stdout, contains('Shutdown hooks complete'));
   });
 
-  testWithoutContext('flutter config contains all features', () async {
+  testWithoutContext('flutter config --list contains all features', () async {
     final String flutterBin = fileSystem.path.join(getFlutterRoot(), 'bin', 'flutter');
     final ProcessResult result = await processManager.run(<String>[
       flutterBin,
       'config',
+      '--list'
     ]);
 
     // contains all of the experiments in features.dart
     expect((result.stdout as String).split('\n'), containsAll(<Matcher>[
-      for (final Feature feature in allFeatures)
+      for (final Feature feature in allConfigurableFeatures)
         contains(feature.configSetting),
     ]));
   });
@@ -138,11 +137,11 @@ void main() {
       '--machine',
     ]);
 
-    final Map<String, Object> versionInfo = json.decode(result.stdout
+    final Map<String, Object?> versionInfo = json.decode(result.stdout
       .toString()
       .replaceAll('Building flutter tool...', '')
       .replaceAll('Waiting for another flutter command to release the startup lock...', '')
-      .trim()) as Map<String, Object>;
+      .trim()) as Map<String, Object?>;
 
     expect(versionInfo, containsPair('flutterRoot', isNotNull));
   });
@@ -160,8 +159,10 @@ void main() {
       '--debug-url=http://127.0.0.1:3333*/',
     ], workingDirectory: helloWorld);
 
-    expect(result.exitCode, 1);
-    expect(result.stderr, contains('Invalid `--debug-url`: http://127.0.0.1:3333*/'));
+    expect(
+      result,
+      const ProcessResultMatcher(exitCode: 1, stderrPattern: 'Invalid `--debug-url`: http://127.0.0.1:3333*/'),
+    );
   });
 
   testWithoutContext('--debug-uri is an alias for --debug-url', () async {
@@ -177,8 +178,14 @@ void main() {
       '--debug-uri=http://127.0.0.1:3333*/', // "uri" not "url"
     ], workingDirectory: helloWorld);
 
-    expect(result.exitCode, 1);
-    expect(result.stderr, contains('Invalid `--debug-url`: http://127.0.0.1:3333*/')); // _"url"_ not "uri"!
+    expect(
+      result,
+      const ProcessResultMatcher(
+        exitCode: 1,
+        // _"url"_ not "uri"!
+        stderrPattern: 'Invalid `--debug-url`: http://127.0.0.1:3333*/',
+      ),
+    );
   });
 
   testWithoutContext('will load bootstrap script before starting', () async {
@@ -213,8 +220,10 @@ void main() {
       '--bundle-sksl-path=foo/bar/baz.json', // This file does not exist.
     ], workingDirectory: helloWorld);
 
-    expect(result.exitCode, 1);
-    expect(result.stderr, contains('No SkSL shader bundle found at foo/bar/baz.json'));
+    expect(result, const ProcessResultMatcher(
+      exitCode: 1,
+      stderrPattern: 'No SkSL shader bundle found at foo/bar/baz.json'),
+    );
   });
 
   testWithoutContext('flutter attach does not support --release', () async {
@@ -246,5 +255,20 @@ void main() {
       'Oops; flutter has exited unexpectedly: "Bad state: test crash please ignore.".\n'
       'A crash report has been written to',
     ));
+  });
+
+  testWithoutContext('flutter supports trailing args', () async {
+    final String flutterBin = fileSystem.path.join(getFlutterRoot(), 'bin', 'flutter');
+    final String helloWorld = fileSystem.path.join(getFlutterRoot(), 'examples', 'hello_world');
+    final ProcessResult result = await processManager.run(<String>[
+      flutterBin,
+      'test',
+      'test/hello_test.dart',
+      '-r',
+      'json',
+    ], workingDirectory: helloWorld);
+
+    expect(result, const ProcessResultMatcher());
+    expect(result.stderr, isEmpty);
   });
 }

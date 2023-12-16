@@ -5,6 +5,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -17,7 +18,7 @@ class TestState extends State<StatefulWidget> {
 
 @optionalTypeArgs
 class _MyGlobalObjectKey<T extends State<StatefulWidget>> extends GlobalObjectKey<T> {
-  const _MyGlobalObjectKey(Object value) : super(value);
+  const _MyGlobalObjectKey(super.value);
 }
 
 void main() {
@@ -513,7 +514,7 @@ void main() {
       exception.toString(),
       equalsIgnoringHashCodes(
         'Duplicate keys found.\n'
-        'If multiple keyed nodes exist as children of another node, they must have unique keys.\n'
+        'If multiple keyed widgets exist as children of another widget, they must have unique keys.\n'
         'Stack(alignment: AlignmentDirectional.topStart, textDirection: ltr, fit: loose) has multiple children with key [GlobalKey#00000 problematic].'
       ),
     );
@@ -540,7 +541,7 @@ void main() {
       exception.toString(),
       equalsIgnoringHashCodes(
         'Duplicate keys found.\n'
-        'If multiple keyed nodes exist as children of another node, they must have unique keys.\n'
+        'If multiple keyed widgets exist as children of another widget, they must have unique keys.\n'
         'Stack(alignment: AlignmentDirectional.topStart, textDirection: ltr, fit: loose) has multiple children with key [GlobalKey#00000 problematic].'
       ),
     );
@@ -716,7 +717,7 @@ void main() {
       exception.toString(),
       equalsIgnoringHashCodes(
         'Duplicate keys found.\n'
-        'If multiple keyed nodes exist as children of another node, they must have unique keys.\n'
+        'If multiple keyed widgets exist as children of another widget, they must have unique keys.\n'
         'Stack(alignment: AlignmentDirectional.topStart, textDirection: ltr, fit: loose) has multiple children with key [GlobalKey#00000 problematic].',
       ),
     );
@@ -900,7 +901,7 @@ void main() {
       children: <Widget>[
         const SwapKeyWidget(childKey: ValueKey<int>(0)),
         Container(key: const ValueKey<int>(1)),
-        Container(color: Colors.green, child: SizedBox(key: key)),
+        ColoredBox(color: Colors.green, child: SizedBox(key: key)),
       ],
     );
     await tester.pumpWidget(stack);
@@ -1023,13 +1024,16 @@ void main() {
   });
 
   testWidgets('GlobalKey - detach and re-attach child to different parents', (WidgetTester tester) async {
+    final ScrollController scrollController = ScrollController();
+    addTearDown(scrollController.dispose);
+
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
       child: Center(
         child: SizedBox(
           height: 100,
           child: CustomScrollView(
-            controller: ScrollController(),
+            controller: scrollController,
             slivers: <Widget>[
               SliverList(
                 delegate: SliverChildListDelegate(<Widget>[
@@ -1064,6 +1068,7 @@ void main() {
     late StateSetter setState;
     int tabBarViewCnt = 2;
     TabController tabController = TabController(length: tabBarViewCnt, vsync: const TestVSync());
+    addTearDown(tabController.dispose);
 
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
@@ -1096,6 +1101,7 @@ void main() {
     setState(() {
       tabBarViewCnt = 1;
       tabController = TabController(length: tabBarViewCnt, vsync: const TestVSync());
+      addTearDown(tabController.dispose);
     });
 
     await tester.pump(const Duration(seconds: 1)); // finish the animation
@@ -1182,13 +1188,13 @@ void main() {
     expect(exception, isFlutterError);
     expect(
       exception.toString(),
-      equalsIgnoringHashCodes(
+      startsWith(
         'The children of `MultiChildRenderObjectElement` must each has an associated render object.\n'
         'This typically means that the `_EmptyWidget` or its children\n'
         'are not a subtype of `RenderObjectWidget`.\n'
         'The following element does not have an associated render object:\n'
         '  _EmptyWidget\n'
-        'debugCreator: _EmptyWidget ← Column ← [root]',
+        'debugCreator: _EmptyWidget ← Column ← ', // Omitted end of debugCreator chain because it's irrelevant for test.
       ),
     );
   });
@@ -1215,13 +1221,13 @@ void main() {
     expect(exception, isFlutterError);
     expect(
       exception.toString(),
-      equalsIgnoringHashCodes(
+      startsWith(
         'The children of `MultiChildRenderObjectElement` must each has an associated render object.\n'
         'This typically means that the `_EmptyWidget` or its children\n'
         'are not a subtype of `RenderObjectWidget`.\n'
         'The following element does not have an associated render object:\n'
         '  _EmptyWidget\n'
-        'debugCreator: _EmptyWidget ← Column ← [root]',
+        'debugCreator: _EmptyWidget ← Column ← ', // Omitted end of debugCreator chain because it's irrelevant for test.
       ),
     );
   });
@@ -1233,7 +1239,7 @@ void main() {
       children: <Widget>[
         Container(),
         Container(key: GlobalKey()),
-        Container(color: Colors.green, child: Container()),
+        ColoredBox(color: Colors.green, child: Container()),
         Container(key: GlobalKey()),
         Container(),
       ],
@@ -1251,11 +1257,10 @@ void main() {
         '├Container-[GlobalKey#00000]\n'
         '│└LimitedBox(maxWidth: 0.0, maxHeight: 0.0, renderObject: RenderLimitedBox#00000 relayoutBoundary=up1)\n'
         '│ └ConstrainedBox(BoxConstraints(biggest), renderObject: RenderConstrainedBox#00000 relayoutBoundary=up2)\n'
-        '├Container(bg: MaterialColor(primary value: Color(0xff4caf50)))\n'
-        '│└ColoredBox(color: MaterialColor(primary value: Color(0xff4caf50)), renderObject: _RenderColoredBox#00000 relayoutBoundary=up1)\n'
-        '│ └Container\n'
-        '│  └LimitedBox(maxWidth: 0.0, maxHeight: 0.0, renderObject: RenderLimitedBox#00000 relayoutBoundary=up2)\n'
-        '│   └ConstrainedBox(BoxConstraints(biggest), renderObject: RenderConstrainedBox#00000 relayoutBoundary=up3)\n'
+        '├ColoredBox(color: MaterialColor(primary value: Color(0xff4caf50)), renderObject: _RenderColoredBox#00000 relayoutBoundary=up1)\n'
+        '│└Container\n'
+        '│ └LimitedBox(maxWidth: 0.0, maxHeight: 0.0, renderObject: RenderLimitedBox#00000 relayoutBoundary=up2)\n'
+        '│  └ConstrainedBox(BoxConstraints(biggest), renderObject: RenderConstrainedBox#00000 relayoutBoundary=up3)\n'
         '├Container-[GlobalKey#00000]\n'
         '│└LimitedBox(maxWidth: 0.0, maxHeight: 0.0, renderObject: RenderLimitedBox#00000 relayoutBoundary=up1)\n'
         '│ └ConstrainedBox(BoxConstraints(biggest), renderObject: RenderConstrainedBox#00000 relayoutBoundary=up2)\n'
@@ -1267,7 +1272,7 @@ void main() {
   });
 
   testWidgets('scheduleBuild while debugBuildingDirtyElements is true', (WidgetTester tester) async {
-    /// ignore here is required for testing purpose because changing the flag properly is hard
+    // ignore here is required for testing purpose because changing the flag properly is hard
     // ignore: invalid_use_of_protected_member
     tester.binding.debugBuildingDirtyElements = true;
     late FlutterError error;
@@ -1461,6 +1466,7 @@ void main() {
       bool? debugDoingBuildOnUpdateRenderObject;
       bool? debugDoingBuildOnDidUnmountRenderObject;
       final ValueNotifier<int> notifier = ValueNotifier<int>(0);
+      addTearDown(notifier.dispose);
 
       late BuildContext spyContext;
 
@@ -1543,11 +1549,13 @@ void main() {
   });
 
   testWidgets('Can create BuildOwner that does not interfere with pointer router or raw key event handler', (WidgetTester tester) async {
-    final int pointerRouterCount = GestureBinding.instance!.pointerRouter.debugGlobalRouteCount;
+    final int pointerRouterCount = GestureBinding.instance.pointerRouter.debugGlobalRouteCount;
     final RawKeyEventHandler? rawKeyEventHandler = RawKeyboard.instance.keyEventHandler;
     expect(rawKeyEventHandler, isNotNull);
-    BuildOwner(focusManager: FocusManager());
-    expect(GestureBinding.instance!.pointerRouter.debugGlobalRouteCount, pointerRouterCount);
+    final FocusManager focusManager = FocusManager();
+    addTearDown(focusManager.dispose);
+    BuildOwner(focusManager: focusManager);
+    expect(GestureBinding.instance.pointerRouter.debugGlobalRouteCount, pointerRouterCount);
     expect(RawKeyboard.instance.keyEventHandler, same(rawKeyEventHandler));
   });
 
@@ -1555,6 +1563,50 @@ void main() {
     final DiagnosticPropertiesBuilder builder = DiagnosticPropertiesBuilder();
     TestRenderObjectElement().debugFillProperties(builder);
     expect(builder.properties.any((DiagnosticsNode property) => property.name == 'renderObject' && property.value == null), isTrue);
+  });
+
+  testWidgets('debugFillProperties sorts dependencies in alphabetical order', (WidgetTester tester) async {
+    final DiagnosticPropertiesBuilder builder = DiagnosticPropertiesBuilder();
+    final TestRenderObjectElement element = TestRenderObjectElement();
+
+    final _TestInheritedElement focusTraversalOrder =
+    _TestInheritedElement(const FocusTraversalOrder(
+      order: LexicalFocusOrder(''),
+      child: Placeholder(),
+    ));
+    final _TestInheritedElement directionality =
+        _TestInheritedElement(const Directionality(
+      textDirection: TextDirection.ltr,
+      child: Placeholder(),
+    ));
+    final _TestInheritedElement navigationBarTheme =
+        _TestInheritedElement(const NavigationBarTheme(
+        data: NavigationBarThemeData(
+          indicatorColor: Color(0xff00ff00),
+        ),
+      child: Placeholder(),
+    ));
+
+    // Dependencies are added out of alphabetical order.
+    element
+      ..dependOnInheritedElement(focusTraversalOrder)
+      ..dependOnInheritedElement(directionality)
+      ..dependOnInheritedElement(navigationBarTheme);
+
+    // Dependencies will be sorted by [debugFillProperties].
+    element.debugFillProperties(builder);
+
+    expect(
+      builder.properties.any((DiagnosticsNode property) => property.name == 'dependencies' && property.value != null),
+      isTrue,
+    );
+    final DiagnosticsProperty<Set<InheritedElement>> dependenciesProperty =
+        builder.properties.firstWhere((DiagnosticsNode property) => property.name == 'dependencies') as DiagnosticsProperty<Set<InheritedElement>>;
+    expect(dependenciesProperty, isNotNull);
+
+    final Set<InheritedElement> dependencies = dependenciesProperty.value!;
+    expect(dependencies.length, equals(3));
+    expect(dependenciesProperty.toDescription(), '[Directionality, FocusTraversalOrder, NavigationBarTheme]');
   });
 
   testWidgets('BuildOwner.globalKeyCount keeps track of in-use global keys', (WidgetTester tester) async {
@@ -1585,7 +1637,29 @@ void main() {
     // occur.
     expect(() => element.state, throwsA(isA<TypeError>()));
     expect(() => element.widget, throwsA(isA<TypeError>()));
-  }, skip: kIsWeb);
+  });
+
+  testWidgets('LayerLink can be swapped between parent and child container layers', (WidgetTester tester) async {
+    // Regression test for https://github.com/flutter/flutter/issues/96959.
+    final LayerLink link = LayerLink();
+    await tester.pumpWidget(_TestLeaderLayerWidget(
+        link: link,
+        child: const _TestLeaderLayerWidget(
+          child: Placeholder(),
+        )
+    ));
+    expect(tester.takeException(), isNull);
+
+    // Swaps the layer link.
+    await tester.pumpWidget(_TestLeaderLayerWidget(
+        child: _TestLeaderLayerWidget(
+          link: link,
+          child: const Placeholder(),
+        ),
+    ));
+    expect(tester.takeException(), isNull);
+
+  });
 
   testWidgets('Deactivate and activate are called correctly', (WidgetTester tester) async {
     final List<String> states = <String>[];
@@ -1621,9 +1695,59 @@ void main() {
     expect(states, <String>['deactivate', 'dispose']);
   });
 
-  testWidgets('RenderObjectElement.unmount dispsoes of its renderObject', (WidgetTester tester) async {
+  testWidgets('Element.deactivate reports its deactivation to the InheritedElement it depends on', (WidgetTester tester) async {
+    final List<Key> removedDependentWidgetKeys = <Key>[];
+
+    InheritedElement elementCreator(InheritedWidget widget) {
+      return _InheritedElementSpy(
+        widget,
+        onRemoveDependent: (Element dependent) {
+          removedDependentWidgetKeys.add(dependent.widget.key!);
+        },
+      );
+    }
+
+    Widget builder(BuildContext context) {
+      context.dependOnInheritedWidgetOfExactType<Inherited>();
+      return Container();
+    }
+
+    await tester.pumpWidget(
+      Inherited(
+        0,
+        elementCreator: elementCreator,
+        child: Column(
+          children: <Widget>[
+            Builder(
+              key: const Key('dependent'),
+              builder: builder,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    expect(removedDependentWidgetKeys, isEmpty);
+
+    await tester.pumpWidget(
+      Inherited(
+        0,
+        elementCreator: elementCreator,
+        child: Column(
+          children: <Widget>[
+            Container(),
+          ],
+        ),
+      ),
+    );
+
+    expect(removedDependentWidgetKeys, hasLength(1));
+    expect(removedDependentWidgetKeys.first, const Key('dependent'));
+  });
+
+  testWidgets('RenderObjectElement.unmount disposes of its renderObject', (WidgetTester tester) async {
     await tester.pumpWidget(const Placeholder());
-    final RenderObjectElement element = tester.allElements.whereType<RenderObjectElement>().first;
+    final RenderObjectElement element = tester.allElements.whereType<RenderObjectElement>().last;
     final RenderObject renderObject = element.renderObject;
     expect(renderObject.debugDisposed, false);
 
@@ -1656,11 +1780,73 @@ The findRenderObject() method was called for the following element:
       )),
     );
   });
+
+  testWidgets('Elements use the identity hashCode', (WidgetTester tester) async {
+    final StatefulElement statefulElement = StatefulElement(const _StatefulLeaf());
+    expect(statefulElement.hashCode, identityHashCode(statefulElement));
+
+    final StatelessElement statelessElement = StatelessElement(const Placeholder());
+
+    expect(statelessElement.hashCode, identityHashCode(statelessElement));
+
+    final InheritedElement inheritedElement = InheritedElement(
+      const Directionality(textDirection: TextDirection.ltr, child: Placeholder()),
+    );
+
+    expect(inheritedElement.hashCode, identityHashCode(inheritedElement));
+  });
+
+  testWidgets('doesDependOnInheritedElement', (WidgetTester tester) async {
+    final _TestInheritedElement ancestor =
+        _TestInheritedElement(const Directionality(
+      textDirection: TextDirection.ltr,
+      child: Placeholder(),
+    ));
+    final _TestInheritedElement child =
+        _TestInheritedElement(const Directionality(
+      textDirection: TextDirection.ltr,
+      child: Placeholder(),
+    ));
+    expect(child.doesDependOnInheritedElement(ancestor), isFalse);
+    child.dependOnInheritedElement(ancestor);
+    expect(child.doesDependOnInheritedElement(ancestor), isTrue);
+  });
+
+  testWidgets(
+      'MultiChildRenderObjectElement.updateChildren test',
+      (WidgetTester tester) async {
+    // Regression test for https://github.com/flutter/flutter/issues/120762.
+    final GlobalKey globalKey = GlobalKey();
+    await tester.pumpWidget(Column(
+      children: <Widget>[
+        const SizedBox(),
+        SizedBox(key: globalKey),
+        const SizedBox(),
+      ],
+    ));
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(Column(
+      children: <Widget>[
+        const SizedBox(),
+        const SizedBox(),
+        SizedBox(child: SizedBox(key: globalKey)),
+      ],
+    ));
+    expect(tester.takeException(), isNull);
+  });
+}
+
+class _TestInheritedElement extends InheritedElement {
+  _TestInheritedElement(super.widget);
+  @override
+  bool doesDependOnInheritedElement(InheritedElement element) {
+    return super.doesDependOnInheritedElement(element);
+  }
 }
 
 class _WidgetWithNoVisitChildren extends StatelessWidget {
-  const _WidgetWithNoVisitChildren(this.child, { Key? key }) :
-    super(key: key);
+  const _WidgetWithNoVisitChildren(this.child);
 
   final Widget child;
 
@@ -1672,7 +1858,7 @@ class _WidgetWithNoVisitChildren extends StatelessWidget {
 }
 
 class _WidgetWithNoVisitChildrenElement extends StatelessElement {
-  _WidgetWithNoVisitChildrenElement(_WidgetWithNoVisitChildren widget): super(widget);
+  _WidgetWithNoVisitChildrenElement(_WidgetWithNoVisitChildren super.widget);
 
   @override
   void visitChildren(ElementVisitor visitor) {
@@ -1684,7 +1870,7 @@ class _WidgetWithNoVisitChildrenElement extends StatelessElement {
 }
 
 class _StatefulLeaf extends StatefulWidget {
-  const _StatefulLeaf({ Key? key }) : super(key: key);
+  const _StatefulLeaf({ super.key });
 
   @override
   State<_StatefulLeaf> createState() => _StatefulLeafState();
@@ -1703,13 +1889,10 @@ class _StatefulLeafState extends State<_StatefulLeaf> {
 
 class Decorate extends StatefulWidget {
   const Decorate({
-    Key? key,
+    super.key,
     required this.didChangeDependencies,
     required this.build,
-  }) :
-    assert(didChangeDependencies != null),
-    assert(build != null),
-    super(key: key);
+  });
 
   final void Function(bool isInBuild) didChangeDependencies;
   final void Function(bool isInBuild) build;
@@ -1722,7 +1905,7 @@ class Decorate extends StatefulWidget {
 }
 
 class DecorateElement extends StatefulElement {
-  DecorateElement(Decorate widget): super(widget);
+  DecorateElement(Decorate super.widget);
 
   bool isDecorated = false;
 
@@ -1752,13 +1935,10 @@ class _DecorateState extends State<Decorate> {
 }
 
 class DirtyElementWithCustomBuildOwner extends Element {
-  DirtyElementWithCustomBuildOwner(BuildOwner buildOwner, Widget widget)
-    : _owner = buildOwner, super(widget);
+  DirtyElementWithCustomBuildOwner(BuildOwner buildOwner, super.widget)
+    : _owner = buildOwner;
 
   final BuildOwner _owner;
-
-  @override
-  void performRebuild() {}
 
   @override
   BuildOwner get owner => _owner;
@@ -1771,16 +1951,37 @@ class DirtyElementWithCustomBuildOwner extends Element {
 }
 
 class Inherited extends InheritedWidget {
-  const Inherited(this.value, {Key? key, required Widget child}) : super(key: key, child: child);
+  const Inherited(this.value, {super.key, required super.child, this.elementCreator});
 
   final int? value;
+  final InheritedElement Function(Inherited widget)? elementCreator;
 
   @override
   bool updateShouldNotify(Inherited oldWidget) => oldWidget.value != value;
+
+  @override
+  InheritedElement createElement() {
+    if (elementCreator != null) {
+      return elementCreator!(this);
+    }
+    return super.createElement();
+  }
+}
+
+class _InheritedElementSpy extends InheritedElement {
+  _InheritedElementSpy(super.widget, {this.onRemoveDependent});
+
+  final void Function(Element element)? onRemoveDependent;
+
+  @override
+  void removeDependent(Element dependent) {
+    super.removeDependent(dependent);
+    onRemoveDependent?.call(dependent);
+  }
 }
 
 class DependentStatefulWidget extends StatefulWidget {
-  const DependentStatefulWidget({Key? key}) : super(key: key);
+  const DependentStatefulWidget({super.key});
 
   @override
   State<StatefulWidget> createState() => DependentState();
@@ -1810,7 +2011,7 @@ class DependentState extends State<DependentStatefulWidget> {
 }
 
 class SwapKeyWidget extends StatefulWidget {
-  const SwapKeyWidget({Key? key, this.childKey}): super(key: key);
+  const SwapKeyWidget({super.key, this.childKey});
 
   final Key? childKey;
   @override
@@ -1839,7 +2040,7 @@ class SwapKeyWidgetState extends State<SwapKeyWidget> {
 }
 
 class _Stateful extends StatefulWidget {
-  const _Stateful({Key? key, required this.child, this.onElementRebuild}) : super(key: key);
+  const _Stateful({required this.child, this.onElementRebuild});
   final Text child;
   final ElementRebuildCallback? onElementRebuild;
   @override
@@ -1859,23 +2060,22 @@ class _StatefulState extends State<_Stateful> {
 }
 
 class StatefulElementSpy extends StatefulElement {
-  StatefulElementSpy(StatefulWidget widget) : super(widget);
+  StatefulElementSpy(super.widget);
 
   _Stateful get _statefulWidget => widget as _Stateful;
 
   @override
-  void rebuild() {
+  void rebuild({bool force = false}) {
     _statefulWidget.onElementRebuild?.call(this);
-    super.rebuild();
+    super.rebuild(force: force);
   }
 }
 
 class StatelessWidgetSpy extends StatelessWidget {
   const StatelessWidgetSpy({
-    Key? key,
+    super.key,
     required this.onBuild,
-  })  : assert(onBuild != null),
-        super(key: key);
+  });
 
   final void Function(BuildContext) onBuild;
 
@@ -1888,7 +2088,7 @@ class StatelessWidgetSpy extends StatelessWidget {
 
 class StatefulWidgetSpy extends StatefulWidget {
   const StatefulWidgetSpy({
-    Key? key,
+    super.key,
     this.onBuild,
     this.onInitState,
     this.onDidChangeDependencies,
@@ -1896,7 +2096,7 @@ class StatefulWidgetSpy extends StatefulWidget {
     this.onDeactivate,
     this.onActivate,
     this.onDidUpdateWidget,
-  })  : super(key: key);
+  });
 
   final void Function(BuildContext)? onBuild;
   final void Function(BuildContext)? onInitState;
@@ -1956,11 +2156,11 @@ class _StatefulWidgetSpyState extends State<StatefulWidgetSpy> {
 
 class RenderObjectWidgetSpy extends LeafRenderObjectWidget {
   const RenderObjectWidgetSpy({
-    Key? key,
+    super.key,
     this.onCreateRenderObject,
     this.onUpdateRenderObject,
     this.onDidUnmountRenderObject,
-  })  : super(key: key);
+  });
 
   final void Function(BuildContext)? onCreateRenderObject;
   final void Function(BuildContext)? onUpdateRenderObject;
@@ -1998,21 +2198,76 @@ class FakeLeafRenderObject extends RenderBox {
 
 class TestRenderObjectElement extends RenderObjectElement {
   TestRenderObjectElement() : super(Table());
+
+  @override
+  void insertRenderObjectChild(covariant RenderObject child, covariant Object? slot) { }
+
+  @override
+  void moveRenderObjectChild(covariant RenderObject child, covariant Object? oldSlot, covariant Object? newSlot) { }
+
+  @override
+  void removeRenderObjectChild(covariant RenderObject child, covariant Object? slot) { }
 }
 
 class _EmptyWidget extends Widget {
-  const _EmptyWidget({Key? key}) : super(key: key);
+  const _EmptyWidget();
 
   @override
   Element createElement() => _EmptyElement(this);
 }
 
 class _EmptyElement extends Element {
-  _EmptyElement(_EmptyWidget widget) : super(widget);
+  _EmptyElement(_EmptyWidget super.widget);
 
   @override
   bool get debugDoingBuild => false;
+}
+
+class _TestLeaderLayerWidget extends SingleChildRenderObjectWidget {
+  const _TestLeaderLayerWidget({
+    this.link,
+    super.child,
+  });
+  final LayerLink? link;
 
   @override
-  void performRebuild() {}
+  _RenderTestLeaderLayerWidget createRenderObject(BuildContext context) {
+    return _RenderTestLeaderLayerWidget(
+      link: link,
+    );
+  }
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderTestLeaderLayerWidget renderObject) {
+    renderObject.link = link;
+  }
+}
+
+class _RenderTestLeaderLayerWidget extends RenderProxyBox {
+  _RenderTestLeaderLayerWidget({
+    LayerLink? link,
+    RenderBox? child,
+  }) : _link = link,
+        super(child);
+
+  LayerLink? get link => _link;
+  LayerLink? _link;
+  set link(LayerLink? value) {
+    if (_link == value) {
+      return;
+    }
+    _link = value;
+    markNeedsPaint();
+  }
+
+  @override
+  bool get isRepaintBoundary => true;
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    super.paint(context, offset);
+    if (_link != null) {
+      context.pushLayer(LeaderLayer(link: _link!, offset: offset),(_, __){}, Offset.zero);
+    }
+  }
 }

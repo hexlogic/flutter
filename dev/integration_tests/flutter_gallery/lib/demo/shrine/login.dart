@@ -4,10 +4,10 @@
 
 import 'package:flutter/material.dart';
 
-import 'package:flutter_gallery/demo/shrine/colors.dart';
+import 'colors.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -29,7 +29,6 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(
         elevation: 0.0,
         backgroundColor: Colors.white,
-        brightness: Brightness.light,
         leading: IconButton(
           icon: const BackButtonIcon(),
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
@@ -52,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 16.0),
                 Text(
                   'SHRINE',
-                  style: Theme.of(context).textTheme.headline5,
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
               ],
             ),
@@ -100,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
                     // of Shrine completely.
                     Navigator.of(context, rootNavigator: true).pop();
                   },
-                  child: const Text('CANCEL'),
+                  child: Text('CANCEL', style: Theme.of(context).textTheme.bodySmall),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -112,7 +111,7 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('NEXT'),
+                  child: Text('NEXT', style: Theme.of(context).textTheme.bodySmall),
                 ),
               ],
             ),
@@ -124,7 +123,7 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 class PrimaryColorOverride extends StatelessWidget {
-  const PrimaryColorOverride({Key? key, this.color, this.child}) : super(key: key);
+  const PrimaryColorOverride({super.key, this.color, this.child});
 
   final Color? color;
   final Widget? child;

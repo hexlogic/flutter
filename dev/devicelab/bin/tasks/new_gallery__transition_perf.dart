@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// @dart = 2.8
-
 import 'dart:io';
 
 import 'package:flutter_devicelab/framework/devices.dart';
@@ -19,7 +17,14 @@ Future<void> main() async {
   final Directory galleryDir = Directory(path.join(galleryParentDir.path, 'gallery'));
 
   try {
-    await task(NewGalleryPerfTest(galleryDir).run);
+    await task(
+      NewGalleryPerfTest(
+        galleryDir,
+        // time out after 20 minutes allowing the tool to take a screenshot to debug
+        // https://github.com/flutter/flutter/issues/114025.
+        timeoutSeconds: 20 * 60,
+      ).run,
+    );
   } finally {
     rmTree(galleryParentDir);
   }

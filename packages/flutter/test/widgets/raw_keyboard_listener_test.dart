@@ -9,8 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('Can dispose without keyboard', (WidgetTester tester) async {
     final FocusNode focusNode = FocusNode();
-    await tester.pumpWidget(RawKeyboardListener(focusNode: focusNode, onKey: null, child: Container()));
-    await tester.pumpWidget(RawKeyboardListener(focusNode: focusNode, onKey: null, child: Container()));
+    addTearDown(focusNode.dispose);
+    await tester.pumpWidget(RawKeyboardListener(focusNode: focusNode, child: Container()));
+    await tester.pumpWidget(RawKeyboardListener(focusNode: focusNode, child: Container()));
     await tester.pumpWidget(Container());
   });
 
@@ -18,6 +19,7 @@ void main() {
     final List<RawKeyEvent> events = <RawKeyEvent>[];
 
     final FocusNode focusNode = FocusNode();
+    addTearDown(focusNode.dispose);
 
     await tester.pumpWidget(
       RawKeyboardListener(
@@ -43,13 +45,13 @@ void main() {
     expect(typedData.isModifierPressed(ModifierKey.metaModifier, side: KeyboardSide.left), isTrue);
 
     await tester.pumpWidget(Container());
-    focusNode.dispose();
-  }, skip: isBrowser); // This is a Fuchsia-specific test.
+  }, skip: isBrowser); // [intended] This is a Fuchsia-specific test.
 
   testWidgets('Web key event', (WidgetTester tester) async {
     final List<RawKeyEvent> events = <RawKeyEvent>[];
 
     final FocusNode focusNode = FocusNode();
+    addTearDown(focusNode.dispose);
 
     await tester.pumpWidget(
       RawKeyboardListener(
@@ -74,13 +76,13 @@ void main() {
     expect(typedData.isModifierPressed(ModifierKey.metaModifier, side: KeyboardSide.left), isTrue);
 
     await tester.pumpWidget(Container());
-    focusNode.dispose();
   });
 
   testWidgets('Defunct listeners do not receive events', (WidgetTester tester) async {
     final List<RawKeyEvent> events = <RawKeyEvent>[];
 
     final FocusNode focusNode = FocusNode();
+    addTearDown(focusNode.dispose);
 
     await tester.pumpWidget(
       RawKeyboardListener(
@@ -108,6 +110,5 @@ void main() {
     expect(events.length, 0);
 
     await tester.pumpWidget(Container());
-    focusNode.dispose();
   });
 }

@@ -32,8 +32,21 @@ class TestMouseTrackerFlutterBinding extends BindingBase
     postFrameCallbacks = <void Function(Duration)>[];
   }
 
+  late final RenderView _renderView = RenderView(
+    view: platformDispatcher.implicitView!,
+  );
+
+  late final PipelineOwner _pipelineOwner = PipelineOwner(
+    onSemanticsUpdate: (ui.SemanticsUpdate _) { assert(false); },
+  );
+
   void setHitTest(BoxHitTest hitTest) {
-    renderView.child = _TestHitTester(hitTest);
+    if (_pipelineOwner.rootNode == null) {
+      _pipelineOwner.rootNode = _renderView;
+      rootPipelineOwner.adoptChild(_pipelineOwner);
+      addRenderView(_renderView);
+    }
+    _renderView.child = _TestHitTester(hitTest);
   }
 
   SchedulerPhase? _overridePhase;
@@ -48,7 +61,7 @@ class TestMouseTrackerFlutterBinding extends BindingBase
     final SchedulerPhase? lastPhase = _overridePhase;
     _overridePhase = SchedulerPhase.persistentCallbacks;
     addPostFrameCallback((_) {
-      mouseTracker.updateAllDevices(renderView.hitTestMouseTrackers);
+      mouseTracker.updateAllDevices();
     });
     _overridePhase = lastPhase;
   }
@@ -57,7 +70,7 @@ class TestMouseTrackerFlutterBinding extends BindingBase
 
   // Proxy post-frame callbacks.
   @override
-  void addPostFrameCallback(void Function(Duration) callback) {
+  void addPostFrameCallback(void Function(Duration) callback, {String debugLabel = 'callback'}) {
     postFrameCallbacks.add(callback);
   }
 
@@ -70,7 +83,7 @@ class TestMouseTrackerFlutterBinding extends BindingBase
 }
 
 // An object that mocks the behavior of a render object with [MouseTrackerAnnotation].
-class TestAnnotationTarget with Diagnosticable implements MouseTrackerAnnotation, HitTestTarget  {
+class TestAnnotationTarget with Diagnosticable implements MouseTrackerAnnotation, HitTestTarget {
   const TestAnnotationTarget({this.onEnter, this.onHover, this.onExit, this.cursor = MouseCursor.defer, this.validForMouseTracker = true});
 
   @override
@@ -89,16 +102,17 @@ class TestAnnotationTarget with Diagnosticable implements MouseTrackerAnnotation
 
   @override
   void handleEvent(PointerEvent event, HitTestEntry entry) {
-    if (event is PointerHoverEvent)
+    if (event is PointerHoverEvent) {
       onHover?.call(event);
+    }
   }
 }
 
 // A hit test entry that can be assigned with a [TestAnnotationTarget] and an
 // optional transform matrix.
-class TestAnnotationEntry extends HitTestEntry {
-  TestAnnotationEntry(TestAnnotationTarget target, [Matrix4? transform])
-    : transform = transform ?? Matrix4.identity(), super(target);
+class TestAnnotationEntry extends HitTestEntry<TestAnnotationTarget> {
+  TestAnnotationEntry(super.target, [Matrix4? transform])
+    : transform = transform ?? Matrix4.identity();
 
   @override
   final Matrix4 transform;

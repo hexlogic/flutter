@@ -3,12 +3,12 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_gallery/demo/shrine/colors.dart';
-import 'package:flutter_gallery/demo/shrine/model/app_state_model.dart';
-import 'package:flutter_gallery/demo/shrine/model/product.dart';
-import 'package:flutter_gallery/demo/shrine/shopping_cart.dart';
 import 'package:scoped_model/scoped_model.dart';
+
+import 'colors.dart';
+import 'model/app_state_model.dart';
+import 'model/product.dart';
+import 'shopping_cart.dart';
 
 // These curves define the emphasized easing curve.
 const Cubic _kAccelerateCurve = Cubic(0.548, 0.0, 0.757, 0.464);
@@ -24,8 +24,7 @@ const double _kCornerRadius = 24.0;
 const double _kWidthForCartIcon = 64.0;
 
 class ExpandingBottomSheet extends StatefulWidget {
-  const ExpandingBottomSheet({Key? key, required this.hideController})
-      : super(key: key);
+  const ExpandingBottomSheet({super.key, required this.hideController});
 
   final AnimationController hideController;
 
@@ -171,7 +170,7 @@ class ExpandingBottomSheetState extends State<ExpandingBottomSheet> with TickerP
       ).animate(
         CurvedAnimation(
           parent: _controller.view,
-          curve: const Interval(0.434, 1.0, curve: Curves.linear), // not used
+          curve: const Interval(0.434, 1.0), // not used
           // only the reverseCurve will be used
           reverseCurve: Interval(0.434, 1.0, curve: Curves.fastOutSlowIn.flipped),
         ),
@@ -222,18 +221,13 @@ class ExpandingBottomSheetState extends State<ExpandingBottomSheet> with TickerP
   // Returns the correct width of the ExpandingBottomSheet based on the number of
   // products in the cart.
   double _widthFor(int numProducts) {
-    switch (numProducts) {
-      case 0:
-        return _kWidthForCartIcon;
-      case 1:
-        return 136.0;
-      case 2:
-        return 192.0;
-      case 3:
-        return 248.0;
-      default:
-        return 278.0;
-    }
+    return switch (numProducts) {
+      0 => _kWidthForCartIcon,
+      1 => 136.0,
+      2 => 192.0,
+      3 => 248.0,
+      _ => 278.0,
+    };
   }
 
   // Returns true if the cart is open or opening and false otherwise.
@@ -361,14 +355,12 @@ class ExpandingBottomSheetState extends State<ExpandingBottomSheet> with TickerP
 
   // Closes the cart if the cart is open, otherwise exits the app (this should
   // only be relevant for Android).
-  Future<bool> _onWillPop() async {
-    if (!_isOpen) {
-      await SystemNavigator.pop();
-      return true;
+  void _handlePopInvoked(bool didPop) {
+    if (didPop) {
+      return;
     }
 
     close();
-    return true;
   }
 
   @override
@@ -378,8 +370,9 @@ class ExpandingBottomSheetState extends State<ExpandingBottomSheet> with TickerP
       duration: const Duration(milliseconds: 225),
       curve: Curves.easeInOut,
       alignment: FractionalOffset.topLeft,
-      child: WillPopScope(
-        onWillPop: _onWillPop,
+      child: PopScope(
+        canPop: !_isOpen,
+        onPopInvoked: _handlePopInvoked,
         child: AnimatedBuilder(
           animation: widget.hideController,
           builder: _buildSlideAnimation,
@@ -402,7 +395,7 @@ class ExpandingBottomSheetState extends State<ExpandingBottomSheet> with TickerP
 }
 
 class ProductThumbnailRow extends StatefulWidget {
-  const ProductThumbnailRow({Key? key}) : super(key: key);
+  const ProductThumbnailRow({super.key});
 
   @override
   State<ProductThumbnailRow> createState() => _ProductThumbnailRowState();
@@ -448,7 +441,7 @@ class _ProductThumbnailRowState extends State<ProductThumbnailRow> {
     );
 
     final Animation<double> opacity = CurvedAnimation(
-      curve: const Interval(0.33, 1.0, curve: Curves.linear),
+      curve: const Interval(0.33, 1.0),
       parent: animation,
     );
 
@@ -511,7 +504,7 @@ class _ProductThumbnailRowState extends State<ProductThumbnailRow> {
 }
 
 class ExtraProductsNumber extends StatelessWidget {
-  const ExtraProductsNumber({Key? key}) : super(key: key);
+  const ExtraProductsNumber({super.key});
 
   // Calculates the number to be displayed at the end of the row if there are
   // more than three products in the cart. This calculates overflow products,
@@ -533,15 +526,16 @@ class ExtraProductsNumber extends StatelessWidget {
   }
 
   Widget _buildOverflow(AppStateModel model, BuildContext context) {
-    if (model.productsInCart.length <= 3)
+    if (model.productsInCart.length <= 3) {
       return Container();
+    }
 
     final int numOverflowProducts = _calculateOverflow(model);
     // Maximum of 99 so padding doesn't get messy.
     final int displayedOverflowProducts = numOverflowProducts <= 99 ? numOverflowProducts : 99;
     return Text(
       '+$displayedOverflowProducts',
-      style: Theme.of(context).primaryTextTheme.button,
+      style: Theme.of(context).primaryTextTheme.labelLarge,
     );
   }
 
@@ -554,7 +548,7 @@ class ExtraProductsNumber extends StatelessWidget {
 }
 
 class ProductThumbnail extends StatelessWidget {
-  const ProductThumbnail(this.animation, this.opacityAnimation, this.product, {Key? key}) : super(key: key);
+  const ProductThumbnail(this.animation, this.opacityAnimation, this.product, {super.key});
 
   final Animation<double> animation;
   final Animation<double> opacityAnimation;

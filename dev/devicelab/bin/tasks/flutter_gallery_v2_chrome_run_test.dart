@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// @dart = 2.8
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -17,9 +15,6 @@ import 'package:path/path.dart' as path;
 Future<void> main() async {
   await task(const NewGalleryChromeRunTest().run);
 }
-
-/// URI for the New Flutter Gallery repository.
-const String galleryRepo = 'https://github.com/flutter/gallery.git';
 
 /// After the gallery loads, a duration of [durationToWaitForError]
 /// is waited, allowing any possible exceptions to be thrown.
@@ -58,9 +53,9 @@ class NewGalleryChromeRunTest {
       ]);
 
       final List<String> options = <String>['-d', 'chrome', '--verbose', '--resident'];
-      final Process process = await startProcess(
-        path.join(flutterDirectory.path, 'bin', 'flutter'),
-        flutterCommandArgs('run', options),
+      final Process process = await startFlutter(
+        'run',
+        options: options,
       );
 
       final Completer<void> stdoutDone = Completer<void>();

@@ -2,16 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// @dart = 2.8
+import 'dart:io' show Directory, Process;
 
-import 'dart:io' show Process, Directory;
-
-import 'package:flutter_devicelab/framework/devices.dart' as adb;
-import 'package:flutter_devicelab/framework/framework.dart' show TaskFunction;
-import 'package:flutter_devicelab/framework/task_result.dart' show TaskResult;
-import 'package:flutter_devicelab/framework/utils.dart' as utils;
-import 'package:flutter_devicelab/microbenchmarks.dart' as microbenchmarks;
 import 'package:path/path.dart' as path;
+
+import '../framework/devices.dart' as adb;
+import '../framework/framework.dart' show TaskFunction;
+import '../framework/task_result.dart' show TaskResult;
+import '../framework/utils.dart' as utils;
+import '../microbenchmarks.dart' as microbenchmarks;
 
 TaskFunction runTask(adb.DeviceOperatingSystem operatingSystem) {
   return () async {
@@ -22,18 +21,15 @@ TaskFunction runTask(adb.DeviceOperatingSystem operatingSystem) {
     final Directory appDir = utils.dir(path.join(utils.flutterDirectory.path,
         'dev/benchmarks/platform_channels_benchmarks'));
     final Process flutterProcess = await utils.inDirectory(appDir, () async {
-      final String flutterExe =
-          path.join(utils.flutterDirectory.path, 'bin', 'flutter');
       final List<String> createArgs = <String>[
-        'create',
         '--platforms',
         'ios,android',
         '--no-overwrite',
         '-v',
-        '.'
+        '.',
       ];
-      print('\nExecuting: $flutterExe $createArgs $appDir');
-      await utils.eval(flutterExe, createArgs);
+      print('\nExecuting: flutter create $createArgs $appDir');
+      await utils.flutter('create', options: createArgs);
 
       final List<String> options = <String>[
         '-v',

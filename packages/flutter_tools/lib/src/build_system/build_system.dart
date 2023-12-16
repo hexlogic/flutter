@@ -8,6 +8,7 @@ import 'package:crypto/crypto.dart';
 import 'package:meta/meta.dart';
 import 'package:pool/pool.dart';
 import 'package:process/process.dart';
+import 'package:unified_analytics/unified_analytics.dart';
 
 import '../artifacts.dart';
 import '../base/error_handling_io.dart';
@@ -17,6 +18,8 @@ import '../base/platform.dart';
 import '../base/utils.dart';
 import '../cache.dart';
 import '../convert.dart';
+import '../reporting/reporting.dart';
+import 'depfile.dart';
 import 'exceptions.dart';
 import 'file_store.dart';
 import 'source.dart';
@@ -191,7 +194,7 @@ abstract class Target {
   /// Resolve the set of input patterns and functions into a concrete list of
   /// files.
   ResolvedFiles resolveInputs(Environment environment) {
-    return _resolveConfiguration(inputs, depfiles, environment, implicit: true, inputs: true);
+    return _resolveConfiguration(inputs, depfiles, environment);
   }
 
   /// Find the current set of declared outputs, including wildcard directories.
@@ -236,8 +239,11 @@ abstract class Target {
     return environment.buildDir.childFile(fileName);
   }
 
-  static ResolvedFiles _resolveConfiguration(List<Source> config,
-    List<String> depfiles, Environment environment, { bool implicit = true, bool inputs = true,
+  static ResolvedFiles _resolveConfiguration(
+    List<Source> config,
+    List<String> depfiles,
+    Environment environment, {
+    bool inputs = true,
   }) {
     final SourceVisitor collector = SourceVisitor(environment, inputs);
     for (final Source source in config) {
@@ -299,7 +305,7 @@ class CompositeTarget extends Target {
 ///
 /// Example (Good):
 ///
-/// Using the build mode to produce different output. Note that the action
+/// Using the build mode to produce different output. The action
 /// is still responsible for outputting a different file, as defined by the
 /// corresponding output [Source].
 ///
@@ -329,6 +335,8 @@ class Environment {
     required Artifacts artifacts,
     required ProcessManager processManager,
     required Platform platform,
+    required Usage usage,
+    required Analytics analytics,
     String? engineVersion,
     required bool generateDartPluginRegistry,
     Directory? buildDir,
@@ -369,6 +377,8 @@ class Environment {
       artifacts: artifacts,
       processManager: processManager,
       platform: platform,
+      usage: usage,
+      analytics: analytics,
       engineVersion: engineVersion,
       inputs: inputs,
       generateDartPluginRegistry: generateDartPluginRegistry,
@@ -389,6 +399,8 @@ class Environment {
     Map<String, String> inputs = const <String, String>{},
     String? engineVersion,
     Platform? platform,
+    Usage? usage,
+    Analytics? analytics,
     bool generateDartPluginRegistry = false,
     required FileSystem fileSystem,
     required Logger logger,
@@ -408,6 +420,8 @@ class Environment {
       artifacts: artifacts,
       processManager: processManager,
       platform: platform ?? FakePlatform(),
+      usage: usage ?? TestUsage(),
+      analytics: analytics ?? NoOpAnalytics(),
       engineVersion: engineVersion,
       generateDartPluginRegistry: generateDartPluginRegistry,
     );
@@ -426,6 +440,8 @@ class Environment {
     required this.logger,
     required this.fileSystem,
     required this.artifacts,
+    required this.usage,
+    required this.analytics,
     this.engineVersion,
     required this.inputs,
     required this.generateDartPluginRegistry,
@@ -506,6 +522,10 @@ class Environment {
 
   final FileSystem fileSystem;
 
+  final Usage usage;
+
+  final Analytics analytics;
+
   /// The version of the current engine, or `null` if built with a local engine.
   final String? engineVersion;
 
@@ -513,6 +533,11 @@ class Environment {
   /// When [true], the main entrypoint is wrapped and the wrapper becomes
   /// the new entrypoint.
   final bool generateDartPluginRegistry;
+
+  late final DepfileService depFileService = DepfileService(
+    logger: logger,
+    fileSystem: fileSystem,
+  );
 }
 
 /// The result information from the build system.
@@ -605,7 +630,7 @@ class FlutterBuildSystem extends BuildSystem {
       // Always persist the file cache to disk.
       fileCache.persist();
     }
-    // TODO(jonahwilliams): this is a bit of a hack, due to various parts of
+    // This is a bit of a hack, due to various parts of
     // the flutter tool writing these files unconditionally. Since Xcode uses
     // timestamps to track files, this leads to unnecessary rebuilds if they
     // are included. Once all the places that write these files have been
@@ -860,13 +885,11 @@ class _BuildInstance {
         ErrorHandlingFileSystem.deleteIfExists(previousFile);
       }
     } on Exception catch (exception, stackTrace) {
-      // TODO(jonahwilliams): throw specific exception for expected errors to mark
-      // as non-fatal. All others should be fatal.
       node.target.clearStamp(environment);
       succeeded = false;
       skipped = false;
       exceptionMeasurements[node.target.name] = ExceptionMeasurement(
-          node.target.name, exception, stackTrace);
+          node.target.name, exception, stackTrace, fatal: true);
     } finally {
       resource.release();
       stopwatch.stop();
@@ -976,7 +999,7 @@ class Node {
     }
     final String content = stamp.readAsStringSync();
     // Something went wrong writing the stamp file.
-    if (content == null || content.isEmpty) {
+    if (content.isEmpty) {
       stamp.deleteSync();
       // Malformed stamp file, not safe to skip.
       _dirty = true;
@@ -1145,18 +1168,13 @@ class InvalidatedReason {
 
   @override
   String toString() {
-    switch (kind) {
-      case InvalidatedReasonKind.inputMissing:
-        return 'The following inputs were missing: ${data.join(',')}';
-      case InvalidatedReasonKind.inputChanged:
-        return 'The following inputs have updated contents: ${data.join(',')}';
-      case InvalidatedReasonKind.outputChanged:
-        return 'The following outputs have updated contents: ${data.join(',')}';
-      case InvalidatedReasonKind.outputMissing:
-        return 'The following outputs were missing: ${data.join(',')}';
-      case InvalidatedReasonKind.outputSetChanged:
-        return 'The following outputs were removed from the output set: ${data.join(',')}';
-    }
+    return switch (kind) {
+      InvalidatedReasonKind.inputMissing => 'The following inputs were missing: ${data.join(',')}',
+      InvalidatedReasonKind.inputChanged => 'The following inputs have updated contents: ${data.join(',')}',
+      InvalidatedReasonKind.outputChanged => 'The following outputs have updated contents: ${data.join(',')}',
+      InvalidatedReasonKind.outputMissing => 'The following outputs were missing: ${data.join(',')}',
+      InvalidatedReasonKind.outputSetChanged => 'The following outputs were removed from the output set: ${data.join(',')}'
+    };
   }
 }
 
